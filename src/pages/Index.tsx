@@ -41,7 +41,8 @@ const defaultData: ReportData = {
     month: "short",
     day: "numeric",
   }),
-  signature: "",
+  commissionerSignature: "",
+  customerSignature: "",
 };
 
 const Index = () => {
@@ -229,14 +230,25 @@ const Index = () => {
             />
           </div>
 
-          {/* Signature */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">Signature:</label>
-            <SignatureCanvas
-              signature={data.signature}
-              onSave={(signature) => setData({ ...data, signature })}
-              disabled={!editMode}
-            />
+          {/* Signatures */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Commissioner Signature:</label>
+              <SignatureCanvas
+                signature={data.commissionerSignature}
+                onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
+                disabled={!editMode}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Customer Signature:</label>
+              <SignatureCanvas
+                signature={data.customerSignature}
+                onSave={(signature) => setData({ ...data, customerSignature: signature })}
+                disabled={!editMode}
+              />
+            </div>
           </div>
         </div>
 

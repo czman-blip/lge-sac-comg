@@ -23,5 +23,6 @@ export interface ReportData {
   products: Product[];
   categories: Category[];
   inspectionDate: string;
-  signature: string;
+  commissionerSignature: string;
+  customerSignature: string;
 }
