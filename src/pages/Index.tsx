@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, Download } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -123,6 +123,133 @@ const Index = () => {
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.error("Failed to generate PDF");
+    }
+  };
+
+  const downloadHTML = () => {
+    try {
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LGE SAC Commissioning Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { color: #A50034; font-size: 32px; margin-bottom: 30px; border-bottom: 3px solid #A50034; padding-bottom: 15px; }
+    h2 { color: #333; font-size: 20px; margin: 30px 0 15px; border-bottom: 2px solid #A50034; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #f5f5f5; font-weight: bold; }
+    .checklist-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 6px; background: #fafafa; }
+    .checklist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .checklist-text { font-weight: 500; flex: 1; }
+    .checkbox-group { display: flex; gap: 20px; }
+    .checkbox-label { display: flex; align-items: center; gap: 5px; }
+    .issue-section { margin-top: 10px; }
+    .issue-label { font-weight: 500; margin-bottom: 5px; }
+    .issue-text { padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; }
+    .images { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+    .images img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+    .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+    .signature-box { border: 2px solid #ddd; padding: 10px; border-radius: 6px; }
+    .signature-label { font-weight: bold; margin-bottom: 10px; }
+    .signature-img { width: 100%; height: 120px; border: 1px solid #ddd; background: white; }
+    .date-section { margin: 20px 0; }
+    .date-label { font-weight: bold; }
+    @media print { body { background: white; padding: 0; } .container { box-shadow: none; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LGE SAC Commissioning Report</h1>
+    
+    <h2>Product List</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Model Name</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.products.map(p => `
+          <tr>
+            <td>${p.name}</td>
+            <td>${p.modelName || '-'}</td>
+            <td>${p.quantity || '-'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    ${data.categories.map(cat => `
+      <h2>${cat.name}</h2>
+      ${cat.items.map(item => `
+        <div class="checklist-item">
+          <div class="checklist-header">
+            <div class="checklist-text">${item.text}</div>
+            <div class="checkbox-group">
+              <div class="checkbox-label">
+                <span>OK</span>
+                <input type="checkbox" ${item.ok ? 'checked' : ''} disabled>
+              </div>
+              <div class="checkbox-label">
+                <span>NG</span>
+                <input type="checkbox" ${item.ng ? 'checked' : ''} disabled>
+              </div>
+            </div>
+          </div>
+          ${item.issue ? `
+            <div class="issue-section">
+              <div class="issue-label">Issue:</div>
+              <div class="issue-text">${item.issue}</div>
+            </div>
+          ` : ''}
+          ${item.images.length > 0 ? `
+            <div class="images">
+              ${item.images.map(img => `<img src="${img}" alt="Issue photo">`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('')}
+    `).join('')}
+
+    <div class="date-section">
+      <span class="date-label">Inspection Date:</span> ${data.inspectionDate}
+    </div>
+
+    <div class="signatures">
+      <div class="signature-box">
+        <div class="signature-label">Commissioner Signature:</div>
+        ${data.commissionerSignature ? `<img src="${data.commissionerSignature}" alt="Commissioner signature" class="signature-img">` : '<div class="signature-img"></div>'}
+      </div>
+      <div class="signature-box">
+        <div class="signature-label">Customer Signature:</div>
+        ${data.customerSignature ? `<img src="${data.customerSignature}" alt="Customer signature" class="signature-img">` : '<div class="signature-img"></div>'}
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'LGE_SAC_Commissioning_Report.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success("HTML file downloaded successfully!");
+    } catch (error) {
+      console.error("HTML download failed:", error);
+      toast.error("Failed to download HTML");
     }
   };
 
@@ -252,8 +379,17 @@ const Index = () => {
           </div>
         </div>
 
-        {/* PDF Button */}
-        <div className="mt-6 flex justify-center">
+        {/* Action Buttons */}
+        <div className="mt-6 flex justify-center gap-4">
+          <Button
+            onClick={downloadHTML}
+            size="lg"
+            className="gap-2"
+            variant="outline"
+          >
+            <Download className="w-5 h-5" />
+            Download HTML
+          </Button>
           <Button
             onClick={generatePDF}
             size="lg"
