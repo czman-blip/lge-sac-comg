@@ -22,7 +22,7 @@ export interface Category {
 export interface ReportData {
   products: Product[];
   categories: Category[];
-  inspectionDate: string;
+  inspectionDate: Date;
   commissionerSignature: string;
   customerSignature: string;
 }

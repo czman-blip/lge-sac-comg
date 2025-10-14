@@ -4,10 +4,14 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
@@ -36,11 +40,7 @@ const defaultData: ReportData = {
       ],
     },
   ],
-  inspectionDate: new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }),
+  inspectionDate: new Date(),
   commissionerSignature: "",
   customerSignature: "",
 };
@@ -53,7 +53,12 @@ const Index = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setData(JSON.parse(saved));
+        const parsedData = JSON.parse(saved);
+        // Convert inspectionDate string back to Date object
+        if (parsedData.inspectionDate) {
+          parsedData.inspectionDate = new Date(parsedData.inspectionDate);
+        }
+        setData(parsedData);
       } catch (e) {
         console.error("Failed to load saved data:", e);
       }
@@ -91,7 +96,7 @@ const Index = () => {
       if (!element) return;
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: window.innerWidth < 768 ? 1.5 : 2,
         useCORS: true,
         logging: false,
       });
@@ -131,13 +136,14 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-card border-2 border-border rounded-lg shadow-lg mb-6 p-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h1 className="text-3xl font-bold text-primary">
               LGE SAC Commissioning Report
             </h1>
             <Button
               variant={editMode ? "default" : "outline"}
               onClick={() => setEditMode(!editMode)}
+              className="w-full sm:w-auto"
             >
               {editMode ? "Edit mode" : "User mode"}
             </Button>
@@ -145,7 +151,7 @@ const Index = () => {
         </div>
 
         {/* Main Report Content */}
-        <div id="report-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-8 space-y-8">
+        <div id="report-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-8 space-y-6 sm:space-y-8">
           {/* Product List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
@@ -155,16 +161,16 @@ const Index = () => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-muted">
-                    <th className="border border-border p-3 text-left font-semibold">Product</th>
-                    <th className="border border-border p-3 text-left font-semibold">Model Name</th>
-                    <th className="border border-border p-3 text-left font-semibold">Quantity</th>
+                    <th className="border border-border p-2 sm:p-3 text-left font-semibold text-sm">Product</th>
+                    <th className="border border-border p-2 sm:p-3 text-left font-semibold text-sm">Model Name</th>
+                    <th className="border border-border p-2 sm:p-3 text-left font-semibold text-sm">Quantity</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.products.map((product, index) => (
                     <tr key={index}>
-                      <td className="border border-border p-3 font-medium">{product.name}</td>
-                      <td className="border border-border p-3">
+                      <td className="border border-border p-2 sm:p-3 font-medium text-sm">{product.name}</td>
+                      <td className="border border-border p-2 sm:p-3">
                         <Input
                           value={product.modelName}
                           onChange={(e) => {
@@ -173,10 +179,10 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter model"
-                          className="border-0 focus-visible:ring-0"
+                          className="border-0 focus-visible:ring-0 text-sm h-8"
                         />
                       </td>
-                      <td className="border border-border p-3">
+                      <td className="border border-border p-2 sm:p-3">
                         <Input
                           value={product.quantity}
                           onChange={(e) => {
@@ -185,7 +191,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0"
+                          className="border-0 focus-visible:ring-0 text-sm h-8"
                         />
                       </td>
                     </tr>
@@ -222,12 +228,29 @@ const Index = () => {
           {/* Inspection Date */}
           <div className="space-y-2">
             <label className="text-sm font-semibold">Inspection Date:</label>
-            <Input
-              type="text"
-              value={data.inspectionDate}
-              onChange={(e) => setData({ ...data, inspectionDate: e.target.value })}
-              className="max-w-xs"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full md:w-[280px] justify-start text-left font-normal",
+                    !data.inspectionDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {data.inspectionDate ? format(data.inspectionDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={data.inspectionDate}
+                  onSelect={(date) => setData({ ...data, inspectionDate: date || new Date() })}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Signatures */}
