@@ -79,16 +79,14 @@ export const SignatureCanvas = ({ signature, onSave, disabled }: SignatureCanvas
           onEnd={handleEnd}
         />
       </div>
-      {!disabled && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleClear}
-          type="button"
-        >
-          Clear Signature
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleClear}
+        type="button"
+      >
+        Clear
+      </Button>
     </div>
   );
 };
