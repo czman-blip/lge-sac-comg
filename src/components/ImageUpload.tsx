@@ -43,7 +43,6 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleFileChange}
             className="hidden"
             multiple
@@ -51,8 +50,18 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
             type="button"
+            className="touch-manipulation active:scale-95 transition-transform"
           >
             <Camera className="w-4 h-4 mr-2" />
             Add Image
