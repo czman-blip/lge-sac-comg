@@ -96,9 +96,10 @@ const Index = () => {
       if (!element) return;
 
       const canvas = await html2canvas(element, {
-        scale: window.innerWidth < 768 ? 1.5 : 2,
+        scale: 2,
         useCORS: true,
         logging: false,
+        windowWidth: 1200,
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -151,7 +152,7 @@ const Index = () => {
         </div>
 
         {/* Main Report Content */}
-        <div id="report-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-8 space-y-6 sm:space-y-8">
+        <div id="report-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Product List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
