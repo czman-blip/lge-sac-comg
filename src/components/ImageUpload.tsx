@@ -11,18 +11,53 @@ interface ImageUploadProps {
 export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach((file) => {
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        onImagesChange([...images, result]);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const resizedImages: string[] = [];
+    for (const file of Array.from(files)) {
+      const resized = await resizeImage(file);
+      resizedImages.push(resized);
+    }
+    
+    onImagesChange([...images, ...resizedImages]);
 
     // Reset input
     if (fileInputRef.current) {
@@ -72,11 +107,11 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
       {images.length > 0 && (
         <div className="grid grid-cols-2 gap-2 mt-2">
           {images.map((image, index) => (
-            <div key={index} className="relative group">
+            <div key={index} className="relative group aspect-square">
               <img
                 src={image}
                 alt={`Upload ${index + 1}`}
-                className="w-full h-24 object-cover rounded border"
+                className="w-full h-full object-contain rounded border bg-muted"
               />
               {!disabled && (
                 <Button
