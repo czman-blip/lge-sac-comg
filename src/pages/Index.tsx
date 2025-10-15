@@ -137,33 +137,26 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-secondary py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-card border-2 border-border rounded-lg shadow-lg mb-6 p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-3xl font-bold text-primary">
-              LGE SAC Commissioning Report
-            </h1>
-            <Button
-              variant={editMode ? "default" : "outline"}
-              onClick={() => setEditMode(!editMode)}
-              className="w-full sm:w-auto"
-            >
-              {editMode ? "Edit mode" : "User mode"}
-            </Button>
+        {/* PDF Content - includes everything */}
+        <div id="pdf-content" className="space-y-6">
+          {/* Header */}
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h1 className="text-3xl font-bold text-primary">
+                LGE SAC Commissioning Report
+              </h1>
+              <Button
+                variant={editMode ? "default" : "outline"}
+                onClick={() => setEditMode(!editMode)}
+                className="w-full sm:w-auto"
+              >
+                {editMode ? "Edit mode" : "User mode"}
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {/* PDF Content */}
-        <div id="pdf-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
-          {/* Header for PDF */}
-          <div className="border-b-2 border-primary pb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-primary text-center">
-              LGE SAC Commissioning Report
-            </h1>
-          </div>
-          
           {/* Main Report Content */}
-          <div id="report-content" className="space-y-4 sm:space-y-5">
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Product List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
