@@ -70,7 +70,6 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
             value={item.issue}
             onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
             placeholder="Describe any issues..."
-            disabled={!editMode}
             className="flex-1"
           />
         </div>
@@ -80,7 +79,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
         <ImageUpload
           images={item.images}
           onImagesChange={(images) => onUpdate({ ...item, images })}
-          disabled={!editMode}
+          disabled={false}
         />
       )}
     </div>

@@ -92,21 +92,23 @@ const Index = () => {
   const generatePDF = async () => {
     try {
       toast.loading("Generating PDF...");
-      const element = document.getElementById("report-content");
+      const element = document.getElementById("pdf-content");
       if (!element) return;
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         logging: false,
         windowWidth: 1200,
+        backgroundColor: '#ffffff',
       });
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
+        compress: true,
       });
 
       const imgWidth = 210;
@@ -114,13 +116,13 @@ const Index = () => {
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
       heightLeft -= 297;
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
         heightLeft -= 297;
       }
 
@@ -151,8 +153,17 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Main Report Content */}
-        <div id="report-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
+        {/* PDF Content */}
+        <div id="pdf-content" className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
+          {/* Header for PDF */}
+          <div className="border-b-2 border-primary pb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary text-center">
+              LGE SAC Commissioning Report
+            </h1>
+          </div>
+          
+          {/* Main Report Content */}
+          <div id="report-content" className="space-y-4 sm:space-y-5">
           {/* Product List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
@@ -274,6 +285,7 @@ const Index = () => {
               />
             </div>
           </div>
+        </div>
         </div>
 
         {/* PDF Button */}
