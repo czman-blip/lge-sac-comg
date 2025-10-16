@@ -75,13 +75,8 @@ const Index = () => {
 
   const handleEditModeToggle = () => {
     if (!editMode) {
-      // Entering edit mode - check password
-      const isAuthenticated = sessionStorage.getItem("edit_mode_auth") === "true";
-      if (!isAuthenticated) {
-        setShowPasswordDialog(true);
-      } else {
-        setEditMode(true);
-      }
+      // Entering edit mode - always ask for password
+      setShowPasswordDialog(true);
     } else {
       // Exiting edit mode
       setEditMode(false);

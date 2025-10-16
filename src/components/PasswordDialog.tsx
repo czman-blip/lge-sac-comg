@@ -28,7 +28,6 @@ export const PasswordDialog = ({ open, onOpenChange, onSuccess }: PasswordDialog
     const storedPassword = sessionStorage.getItem(PASSWORD_KEY) || ADMIN_PASSWORD;
     
     if (password === storedPassword) {
-      sessionStorage.setItem("edit_mode_auth", "true");
       onSuccess();
       onOpenChange(false);
       setPassword("");
