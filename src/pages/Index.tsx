@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { PasswordDialog } from "@/components/PasswordDialog";
+import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
@@ -48,6 +50,8 @@ const defaultData: ReportData = {
 const Index = () => {
   const [editMode, setEditMode] = useState(false);
   const [data, setData] = useState<ReportData>(defaultData);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -68,6 +72,21 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
+
+  const handleEditModeToggle = () => {
+    if (!editMode) {
+      // Entering edit mode - check password
+      const isAuthenticated = sessionStorage.getItem("edit_mode_auth") === "true";
+      if (!isAuthenticated) {
+        setShowPasswordDialog(true);
+      } else {
+        setEditMode(true);
+      }
+    } else {
+      // Exiting edit mode
+      setEditMode(false);
+    }
+  };
 
   const addCategory = () => {
     const newCategory: Category = {
@@ -145,13 +164,25 @@ const Index = () => {
               <h1 className="text-3xl font-bold text-primary">
                 LGE SAC Commissioning Report
               </h1>
-              <Button
-                variant={editMode ? "default" : "outline"}
-                onClick={() => setEditMode(!editMode)}
-                className="w-full sm:w-auto"
-              >
-                {editMode ? "Edit mode" : "User mode"}
-              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant={editMode ? "default" : "outline"}
+                  onClick={handleEditModeToggle}
+                  className="flex-1 sm:flex-none"
+                >
+                  {editMode ? "Edit mode" : "User mode"}
+                </Button>
+                {editMode && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowChangePasswordDialog(true)}
+                    title="Change password"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -293,6 +324,17 @@ const Index = () => {
           </Button>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <PasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        onSuccess={() => setEditMode(true)}
+      />
+      <ChangePasswordDialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
+      />
     </div>
   );
 };
