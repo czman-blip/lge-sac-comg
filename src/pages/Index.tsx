@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, FileCode } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -145,79 +145,6 @@ const Index = () => {
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.error("Failed to generate PDF");
-    }
-  };
-
-  const exportHTML = () => {
-    try {
-      // Clone the entire document
-      const docClone = document.documentElement.cloneNode(true) as HTMLElement;
-      
-      // Remove edit/user mode buttons and password change button
-      const buttons = docClone.querySelectorAll('button');
-      buttons.forEach(button => {
-        const text = button.textContent;
-        if (text?.includes('Edit mode') || text?.includes('User mode')) {
-          button.remove();
-        }
-        // Remove password change button by checking for KeyRound icon
-        const keyIcon = button.querySelector('svg');
-        if (keyIcon?.querySelector('path[d*="m15.5"]')) {
-          button.remove();
-        }
-      });
-
-      // Remove password dialogs
-      const dialogs = docClone.querySelectorAll('[role="dialog"]');
-      dialogs.forEach(dialog => dialog.remove());
-
-      // Get the current origin for base href
-      const baseUrl = window.location.origin;
-
-      // Serialize the current report data
-      const reportDataScript = `
-        <script>
-          // Restore report data
-          window.__REPORT_DATA__ = ${JSON.stringify(data)};
-          
-          // Initialize after DOM is loaded
-          document.addEventListener('DOMContentLoaded', function() {
-            console.log('Report loaded with data:', window.__REPORT_DATA__);
-          });
-        </script>
-      `;
-
-      // Get all inline styles from head
-      const headContent = docClone.querySelector('head')?.innerHTML || '';
-      
-      // Create the complete HTML
-      let htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <base href="${baseUrl}/">
-  ${headContent}
-  ${reportDataScript}
-</head>
-<body>
-  ${docClone.querySelector('body')?.innerHTML || ''}
-</body>
-</html>`;
-
-      // Create blob and download
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'LGE_SAC_Commissioning_Report.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success("HTML exported successfully!");
-    } catch (error) {
-      console.error("HTML export failed:", error);
-      toast.error("Failed to export HTML");
     }
   };
 
@@ -380,8 +307,8 @@ const Index = () => {
         </div>
         </div>
 
-        {/* Export Buttons */}
-        <div className="mt-6 flex justify-center gap-4">
+        {/* PDF Button */}
+        <div className="mt-6 flex justify-center">
           <Button
             onClick={generatePDF}
             size="lg"
@@ -389,15 +316,6 @@ const Index = () => {
           >
             <FileDown className="w-5 h-5" />
             Generate PDF
-          </Button>
-          <Button
-            onClick={exportHTML}
-            size="lg"
-            variant="outline"
-            className="gap-2"
-          >
-            <FileCode className="w-5 h-5" />
-            Export HTML
           </Button>
         </div>
       </div>
