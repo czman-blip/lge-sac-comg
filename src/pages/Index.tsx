@@ -150,54 +150,56 @@ const Index = () => {
 
   const exportHTML = () => {
     try {
-      // Create a clone of the PDF content
-      const element = document.getElementById("pdf-content");
-      if (!element) return;
+      // Clone the entire document
+      const docClone = document.documentElement.cloneNode(true) as HTMLElement;
       
-      const clone = element.cloneNode(true) as HTMLElement;
-      
-      // Remove edit/user mode buttons from the clone
-      const buttons = clone.querySelectorAll('button');
+      // Remove edit/user mode buttons and password change button
+      const buttons = docClone.querySelectorAll('button');
       buttons.forEach(button => {
         const text = button.textContent;
-        if (text?.includes('Edit mode') || text?.includes('User mode') || button.querySelector('[title="Change password"]')) {
-          button.parentElement?.remove();
+        if (text?.includes('Edit mode') || text?.includes('User mode')) {
+          button.remove();
+        }
+        // Remove password change button by checking for KeyRound icon
+        const keyIcon = button.querySelector('svg');
+        if (keyIcon?.querySelector('path[d*="m15.5"]')) {
+          button.remove();
         }
       });
 
-      // Get all stylesheets
-      const styles = Array.from(document.styleSheets)
-        .map(styleSheet => {
-          try {
-            return Array.from(styleSheet.cssRules)
-              .map(rule => rule.cssText)
-              .join('\n');
-          } catch (e) {
-            console.warn('Could not access stylesheet:', e);
-            return '';
-          }
-        })
-        .join('\n');
+      // Remove password dialogs
+      const dialogs = docClone.querySelectorAll('[role="dialog"]');
+      dialogs.forEach(dialog => dialog.remove());
 
-      // Create complete HTML document
-      const htmlContent = `
-<!DOCTYPE html>
+      // Get the current origin for base href
+      const baseUrl = window.location.origin;
+
+      // Serialize the current report data
+      const reportDataScript = `
+        <script>
+          // Restore report data
+          window.__REPORT_DATA__ = ${JSON.stringify(data)};
+          
+          // Initialize after DOM is loaded
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('Report loaded with data:', window.__REPORT_DATA__);
+          });
+        </script>
+      `;
+
+      // Get all inline styles from head
+      const headContent = docClone.querySelector('head')?.innerHTML || '';
+      
+      // Create the complete HTML
+      let htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LGE SAC Commissioning Report</title>
-  <style>
-    ${styles}
-    body {
-      margin: 0;
-      padding: 20px;
-      background-color: hsl(var(--secondary));
-    }
-  </style>
+  <base href="${baseUrl}/">
+  ${headContent}
+  ${reportDataScript}
 </head>
 <body>
-  ${clone.outerHTML}
+  ${docClone.querySelector('body')?.innerHTML || ''}
 </body>
 </html>`;
 
