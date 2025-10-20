@@ -63,27 +63,23 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
         </div>
       </div>
 
-      {!item.ok && (
-        <div className="flex items-center gap-3 min-h-[44px]">
-          <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
-          <Input
-            value={item.issue}
-            onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
-            placeholder="Describe any issues..."
-            className="flex-1 h-12 leading-6 py-2"
-          />
-        </div>
-      )}
+      <div className="flex items-center gap-3 min-h-[44px]">
+        <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
+        <Input
+          value={item.issue}
+          onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
+          placeholder="Describe any issues..."
+          className="flex-1 h-12 leading-6 py-2"
+        />
+      </div>
 
-      {!item.ok && (
-        <div className="mt-2">
-          <ImageUpload
-            images={item.images}
-            onImagesChange={(images) => onUpdate({ ...item, images })}
-            disabled={false}
-          />
-        </div>
-      )}
+      <div className="mt-2">
+        <ImageUpload
+          images={item.images}
+          onImagesChange={(images) => onUpdate({ ...item, images })}
+          disabled={false}
+        />
+      </div>
     </div>
   );
 };
