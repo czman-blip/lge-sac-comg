@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, FileCode } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -145,6 +145,77 @@ const Index = () => {
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.error("Failed to generate PDF");
+    }
+  };
+
+  const exportHTML = () => {
+    try {
+      // Create a clone of the PDF content
+      const element = document.getElementById("pdf-content");
+      if (!element) return;
+      
+      const clone = element.cloneNode(true) as HTMLElement;
+      
+      // Remove edit/user mode buttons from the clone
+      const buttons = clone.querySelectorAll('button');
+      buttons.forEach(button => {
+        const text = button.textContent;
+        if (text?.includes('Edit mode') || text?.includes('User mode') || button.querySelector('[title="Change password"]')) {
+          button.parentElement?.remove();
+        }
+      });
+
+      // Get all stylesheets
+      const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+          try {
+            return Array.from(styleSheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('\n');
+          } catch (e) {
+            console.warn('Could not access stylesheet:', e);
+            return '';
+          }
+        })
+        .join('\n');
+
+      // Create complete HTML document
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LGE SAC Commissioning Report</title>
+  <style>
+    ${styles}
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: hsl(var(--secondary));
+    }
+  </style>
+</head>
+<body>
+  ${clone.outerHTML}
+</body>
+</html>`;
+
+      // Create blob and download
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'LGE_SAC_Commissioning_Report.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success("HTML exported successfully!");
+    } catch (error) {
+      console.error("HTML export failed:", error);
+      toast.error("Failed to export HTML");
     }
   };
 
@@ -307,8 +378,8 @@ const Index = () => {
         </div>
         </div>
 
-        {/* PDF Button */}
-        <div className="mt-6 flex justify-center">
+        {/* Export Buttons */}
+        <div className="mt-6 flex justify-center gap-4">
           <Button
             onClick={generatePDF}
             size="lg"
@@ -316,6 +387,15 @@ const Index = () => {
           >
             <FileDown className="w-5 h-5" />
             Generate PDF
+          </Button>
+          <Button
+            onClick={exportHTML}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <FileCode className="w-5 h-5" />
+            Export HTML
           </Button>
         </div>
       </div>
