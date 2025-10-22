@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -18,6 +18,9 @@ import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
 const defaultData: ReportData = {
+  projectName: "",
+  opportunityNumber: "",
+  address: "",
   products: [
     { name: "ODU", modelName: "", quantity: "" },
     { name: "IDU", modelName: "", quantity: "" },
@@ -103,6 +106,44 @@ const Index = () => {
     setData({ ...data, categories: newCategories });
   };
 
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    toast.loading("Getting your location...");
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Use reverse geocoding to get address
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          
+          if (data.display_name) {
+            setData(prev => ({ ...prev, address: data.display_name }));
+            toast.success("Location retrieved successfully!");
+          } else {
+            setData(prev => ({ ...prev, address: `${latitude}, ${longitude}` }));
+            toast.success("Coordinates retrieved!");
+          }
+        } catch (error) {
+          setData(prev => ({ ...prev, address: `${latitude}, ${longitude}` }));
+          toast.success("Coordinates retrieved!");
+        }
+      },
+      (error) => {
+        toast.error("Unable to retrieve your location");
+        console.error("Geolocation error:", error);
+      }
+    );
+  };
+
   const generatePDF = async () => {
     try {
       toast.loading("Generating PDF...");
@@ -183,6 +224,54 @@ const Index = () => {
 
           {/* Main Report Content */}
           <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
+          {/* Project Information */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Project Information
+            </h2>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                <label className="text-sm font-semibold">Project name:</label>
+                <Input
+                  value={data.projectName}
+                  onChange={(e) => setData({ ...data, projectName: e.target.value })}
+                  placeholder="Enter project name"
+                  className="h-10"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                <label className="text-sm font-semibold">Opportunity number:</label>
+                <Input
+                  value={data.opportunityNumber}
+                  onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
+                  placeholder="Enter opportunity number"
+                  className="h-10"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
+                <label className="text-sm font-semibold pt-2">Address:</label>
+                <div className="space-y-2">
+                  <Input
+                    value={data.address}
+                    onChange={(e) => setData({ ...data, address: e.target.value })}
+                    placeholder="Enter address or use location button"
+                    className="h-10"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={getCurrentLocation}
+                    className="gap-2"
+                    type="button"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Get Current Location
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Product List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">

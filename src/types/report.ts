@@ -20,6 +20,9 @@ export interface Category {
 }
 
 export interface ReportData {
+  projectName: string;
+  opportunityNumber: string;
+  address: string;
   products: Product[];
   categories: Category[];
   inspectionDate: Date;
