@@ -14,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
-import { AddressMapDialog } from "@/components/AddressMapDialog";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
@@ -56,7 +55,6 @@ const Index = () => {
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
-  const [showAddressMapDialog, setShowAddressMapDialog] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -256,31 +254,19 @@ const Index = () => {
                   <Input
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
-                    placeholder="Enter address or use map/location buttons"
+                    placeholder="Enter address or use location button"
                     className="h-10"
                   />
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddressMapDialog(true)}
-                      className="gap-2"
-                      type="button"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      Select from Map
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={getCurrentLocation}
-                      className="gap-2"
-                      type="button"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      Use Current Location
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={getCurrentLocation}
+                    className="gap-2"
+                    type="button"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Get Current Location
+                  </Button>
                 </div>
               </div>
             </div>
@@ -432,12 +418,6 @@ const Index = () => {
       <ChangePasswordDialog
         open={showChangePasswordDialog}
         onOpenChange={setShowChangePasswordDialog}
-      />
-      <AddressMapDialog
-        open={showAddressMapDialog}
-        onOpenChange={setShowAddressMapDialog}
-        onAddressSelect={(address) => setData({ ...data, address })}
-        currentAddress={data.address}
       />
     </div>
   );
