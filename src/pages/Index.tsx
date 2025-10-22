@@ -181,7 +181,10 @@ const Index = () => {
         heightLeft -= 297;
       }
 
-      pdf.save("LGE_SAC_Commissioning_Report.pdf");
+      const fileName = data.projectName 
+        ? `${data.projectName}_Commissioning_Report.pdf`
+        : "LGE_SAC_Commissioning_Report.pdf";
+      pdf.save(fileName);
       toast.success("PDF generated successfully!");
     } catch (error) {
       console.error("PDF generation failed:", error);
