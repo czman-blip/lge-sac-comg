@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, History } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -14,6 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { HistoryDialog } from "@/components/HistoryDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
@@ -55,6 +57,8 @@ const Index = () => {
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -70,11 +74,230 @@ const Index = () => {
         console.error("Failed to load saved data:", e);
       }
     }
+    loadOrCreateReport();
   }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    saveToDatabase();
   }, [data]);
+
+  const loadOrCreateReport = async () => {
+    try {
+      const savedReportId = localStorage.getItem("currentReportId");
+      
+      if (savedReportId) {
+        // Load existing report
+        const { data: report, error } = await supabase
+          .from("reports")
+          .select("*, categories(*, checklist_items(*)), products(*)")
+          .eq("id", savedReportId)
+          .single();
+
+        if (error) throw error;
+
+        if (report) {
+          setCurrentReportId(report.id);
+          // Convert DB format to app format
+          const loadedData: ReportData = {
+            projectName: report.project_name,
+            opportunityNumber: report.opportunity_number || "",
+            address: report.address || "",
+            products: report.products.sort((a, b) => a.sort_order - b.sort_order).map(p => ({
+              name: p.name,
+              modelName: p.model_name || "",
+              quantity: p.quantity || ""
+            })),
+            categories: report.categories.sort((a, b) => a.sort_order - b.sort_order).map(cat => ({
+              id: cat.id,
+              name: cat.name,
+              items: cat.checklist_items.sort((a, b) => a.sort_order - b.sort_order).map(item => ({
+                id: item.id,
+                text: item.text,
+                ok: item.ok,
+                ng: item.ng,
+                issue: item.issue || "",
+                images: item.images || []
+              }))
+            })),
+            inspectionDate: new Date(report.inspection_date),
+            commissionerSignature: report.commissioner_signature || "",
+            customerSignature: report.customer_signature || ""
+          };
+          setData(loadedData);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load report:", error);
+    }
+  };
+
+  const saveToDatabase = async () => {
+    if (!currentReportId) {
+      // Create new report
+      const { data: newReport, error: reportError } = await supabase
+        .from("reports")
+        .insert({
+          project_name: data.projectName || "Untitled Report",
+          opportunity_number: data.opportunityNumber,
+          address: data.address,
+          inspection_date: data.inspectionDate.toISOString(),
+          commissioner_signature: data.commissionerSignature,
+          customer_signature: data.customerSignature
+        })
+        .select()
+        .single();
+
+      if (reportError || !newReport) {
+        console.error("Failed to create report:", reportError);
+        return;
+      }
+
+      setCurrentReportId(newReport.id);
+      localStorage.setItem("currentReportId", newReport.id);
+
+      // Save products
+      if (data.products.length > 0) {
+        await supabase.from("products").insert(
+          data.products.map((p, idx) => ({
+            report_id: newReport.id,
+            name: p.name,
+            model_name: p.modelName,
+            quantity: p.quantity,
+            sort_order: idx
+          }))
+        );
+      }
+
+      // Save categories and items
+      for (let catIdx = 0; catIdx < data.categories.length; catIdx++) {
+        const cat = data.categories[catIdx];
+        const { data: newCategory, error: catError } = await supabase
+          .from("categories")
+          .insert({
+            report_id: newReport.id,
+            name: cat.name,
+            sort_order: catIdx
+          })
+          .select()
+          .single();
+
+        if (!catError && newCategory && cat.items.length > 0) {
+          await supabase.from("checklist_items").insert(
+            cat.items.map((item, itemIdx) => ({
+              category_id: newCategory.id,
+              text: item.text,
+              ok: item.ok,
+              ng: item.ng,
+              issue: item.issue,
+              images: item.images,
+              sort_order: itemIdx
+            }))
+          );
+        }
+      }
+    } else {
+      // Update existing report
+      await supabase
+        .from("reports")
+        .update({
+          project_name: data.projectName,
+          opportunity_number: data.opportunityNumber,
+          address: data.address,
+          inspection_date: data.inspectionDate.toISOString(),
+          commissioner_signature: data.commissionerSignature,
+          customer_signature: data.customerSignature
+        })
+        .eq("id", currentReportId);
+
+      // Update products
+      await supabase.from("products").delete().eq("report_id", currentReportId);
+      if (data.products.length > 0) {
+        await supabase.from("products").insert(
+          data.products.map((p, idx) => ({
+            report_id: currentReportId,
+            name: p.name,
+            model_name: p.modelName,
+            quantity: p.quantity,
+            sort_order: idx
+          }))
+        );
+      }
+
+      // Sync categories and items
+      for (let catIdx = 0; catIdx < data.categories.length; catIdx++) {
+        const cat = data.categories[catIdx];
+        
+        // Check if category exists in DB
+        const { data: existingCat } = await supabase
+          .from("categories")
+          .select("id")
+          .eq("id", cat.id)
+          .eq("report_id", currentReportId)
+          .single();
+
+        let categoryId = cat.id;
+
+        if (!existingCat) {
+          // Create new category
+          const { data: newCat } = await supabase
+            .from("categories")
+            .insert({
+              report_id: currentReportId,
+              name: cat.name,
+              sort_order: catIdx
+            })
+            .select()
+            .single();
+          
+          if (newCat) categoryId = newCat.id;
+        } else {
+          // Update existing category
+          await supabase
+            .from("categories")
+            .update({ name: cat.name, sort_order: catIdx })
+            .eq("id", cat.id);
+        }
+
+        // Sync items
+        for (let itemIdx = 0; itemIdx < cat.items.length; itemIdx++) {
+          const item = cat.items[itemIdx];
+          
+          const { data: existingItem } = await supabase
+            .from("checklist_items")
+            .select("id")
+            .eq("id", item.id)
+            .single();
+
+          if (!existingItem) {
+            // Create new item
+            await supabase.from("checklist_items").insert({
+              category_id: categoryId,
+              text: item.text,
+              ok: item.ok,
+              ng: item.ng,
+              issue: item.issue,
+              images: item.images,
+              sort_order: itemIdx
+            });
+          } else {
+            // Update existing item (triggers will log changes)
+            await supabase
+              .from("checklist_items")
+              .update({
+                text: item.text,
+                ok: item.ok,
+                ng: item.ng,
+                issue: item.issue,
+                images: item.images,
+                sort_order: itemIdx
+              })
+              .eq("id", item.id);
+          }
+        }
+      }
+    }
+  };
 
   const handleEditModeToggle = () => {
     if (!editMode) {
@@ -204,6 +427,14 @@ const Index = () => {
                 LGE SAC Commissioning Report
               </h1>
               <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowHistoryDialog(true)}
+                  title="View change history"
+                >
+                  <History className="w-4 h-4" />
+                </Button>
                 <Button
                   variant={editMode ? "default" : "outline"}
                   onClick={handleEditModeToggle}
@@ -421,6 +652,10 @@ const Index = () => {
       <ChangePasswordDialog
         open={showChangePasswordDialog}
         onOpenChange={setShowChangePasswordDialog}
+      />
+      <HistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
       />
     </div>
   );

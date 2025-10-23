@@ -14,7 +14,200 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          report_id: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          report_id: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          report_id?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          images: string[] | null
+          issue: string | null
+          ng: boolean | null
+          ok: boolean | null
+          sort_order: number | null
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          issue?: string | null
+          ng?: boolean | null
+          ok?: boolean | null
+          sort_order?: number | null
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          issue?: string | null
+          ng?: boolean | null
+          ok?: boolean | null
+          sort_order?: number | null
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_history: {
+        Row: {
+          change_type: string
+          changed_at: string
+          field_name: string | null
+          id: string
+          item_id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string
+          field_name?: string | null
+          id?: string
+          item_id: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string
+          field_name?: string | null
+          id?: string
+          item_id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_history_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          model_name: string | null
+          name: string
+          quantity: string | null
+          report_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_name?: string | null
+          name: string
+          quantity?: string | null
+          report_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_name?: string | null
+          name?: string
+          quantity?: string | null
+          report_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          address: string | null
+          commissioner_signature: string | null
+          created_at: string
+          customer_signature: string | null
+          id: string
+          inspection_date: string | null
+          opportunity_number: string | null
+          project_name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          commissioner_signature?: string | null
+          created_at?: string
+          customer_signature?: string | null
+          id?: string
+          inspection_date?: string | null
+          opportunity_number?: string | null
+          project_name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          commissioner_signature?: string | null
+          created_at?: string
+          customer_signature?: string | null
+          id?: string
+          inspection_date?: string | null
+          opportunity_number?: string | null
+          project_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
