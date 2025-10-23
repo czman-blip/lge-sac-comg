@@ -107,11 +107,11 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
       {images.length > 0 && (
         <div className="grid grid-cols-2 gap-2 mt-2">
           {images.map((image, index) => (
-            <div key={index} className="relative group">
+            <div key={index} className="relative group aspect-square">
               <img
                 src={image}
                 alt={`Upload ${index + 1}`}
-                className="w-full h-auto object-contain rounded border bg-muted"
+                className="w-full h-full object-contain rounded border bg-muted"
               />
               {!disabled && (
                 <Button
