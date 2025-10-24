@@ -239,7 +239,7 @@ const Index = () => {
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
@@ -248,7 +248,7 @@ const Index = () => {
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
@@ -258,7 +258,7 @@ const Index = () => {
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-12 text-base"
+                    className="h-10"
                   />
                   <Button
                     variant="outline"
@@ -292,7 +292,7 @@ const Index = () => {
                 <tbody>
                   {data.products.map((product, index) => (
                     <tr key={index}>
-                      <td className="border border-border p-2 sm:p-3 font-medium text-sm align-middle">{product.name}</td>
+                      <td className="border border-border p-2 sm:p-3 font-medium text-sm">{product.name}</td>
                       <td className="border border-border p-2 sm:p-3">
                         <Input
                           value={product.modelName}
@@ -302,7 +302,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter model"
-                          className="border-0 focus-visible:ring-0 text-sm h-10 px-2"
+                          className="border-0 focus-visible:ring-0 text-sm h-8"
                         />
                       </td>
                       <td className="border border-border p-2 sm:p-3">
@@ -314,7 +314,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm h-10 px-2"
+                          className="border-0 focus-visible:ring-0 text-sm h-8"
                         />
                       </td>
                     </tr>
