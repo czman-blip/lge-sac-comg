@@ -42,7 +42,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode }: Cate
           <Input
             value={category.name}
             onChange={(e) => onUpdate({ ...category, name: e.target.value })}
-            className="text-lg font-semibold"
+            className="text-lg font-semibold h-14 py-3 leading-normal"
             placeholder="Category name"
           />
         ) : (

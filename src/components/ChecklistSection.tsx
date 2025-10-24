@@ -21,7 +21,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
             <Input
               value={item.text}
               onChange={(e) => onUpdate({ ...item, text: e.target.value })}
-              className="font-medium"
+              className="font-medium h-14 py-3 leading-normal"
               placeholder="Checklist item"
             />
           ) : (
@@ -69,7 +69,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="flex-1 h-12 leading-6 py-2"
+          className="flex-1 h-14 py-3 leading-normal"
         />
       </div>
 
