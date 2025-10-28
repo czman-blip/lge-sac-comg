@@ -331,7 +331,13 @@ const Index = () => {
         const isTextarea = origEl.tagName === 'TEXTAREA';
         const isInput = origEl.tagName === 'INPUT';
         const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
-        const isProductFilter = origEl.getAttribute('data-product-filter') === 'true';
+
+        // Hide ALL comboboxes in PDF
+        if (isSelectTrigger) {
+          box.style.display = 'none';
+          cloneEl.replaceWith(box);
+          return;
+        }
 
         let text = '';
         if (isInput) {
@@ -340,17 +346,6 @@ const Index = () => {
         } else if (isTextarea) {
           const ta = origEl as HTMLTextAreaElement;
           text = ta.value ?? ta.textContent ?? '';
-        } else if (isSelectTrigger) {
-          if (isProductFilter) {
-            // Product Type Filter: show selected text
-            const span = origEl.querySelector('span');
-            text = (span?.textContent ?? origEl.textContent ?? '').trim();
-          } else {
-            // Other comboboxes: hide completely
-            box.style.display = 'none';
-            cloneEl.replaceWith(box);
-            return;
-          }
         }
 
         box.textContent = text;
