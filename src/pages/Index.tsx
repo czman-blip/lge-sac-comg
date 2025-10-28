@@ -251,12 +251,112 @@ const Index = () => {
 
   const generatePDF = async () => {
     const loadingToast = toast.loading("Generating PDF...");
+    // Keep all existing features, only rebuild the PDF pipeline for robust text rendering
+    let hiddenContainer: HTMLDivElement | null = null;
+    let styleEl: HTMLStyleElement | null = null;
     try {
       const element = document.getElementById("pdf-content");
       if (!element) {
         toast.dismiss(loadingToast);
         return;
       }
+
+      const anyDoc = document as any;
+      if (anyDoc.fonts && anyDoc.fonts.ready) {
+        try { await anyDoc.fonts.ready; } catch {}
+      }
+
+      // Create a deep clone so we can safely normalize form controls for PDF
+      const snapshot = element.cloneNode(true) as HTMLElement;
+      snapshot.classList.add("pdf-snapshot");
+
+      // Sync live values from the original DOM into the snapshot before replacement
+      const origInputs = element.querySelectorAll<HTMLInputElement>("input");
+      const cloneInputs = snapshot.querySelectorAll<HTMLInputElement>("input");
+      origInputs.forEach((orig, i) => {
+        const c = cloneInputs[i];
+        if (c) {
+          c.value = orig.value;
+          if (!c.getAttribute("value")) c.setAttribute("value", orig.value);
+        }
+      });
+
+      const origTextareas = element.querySelectorAll<HTMLTextAreaElement>("textarea");
+      const cloneTextareas = snapshot.querySelectorAll<HTMLTextAreaElement>("textarea");
+      origTextareas.forEach((orig, i) => {
+        const c = cloneTextareas[i];
+        if (c) {
+          c.value = orig.value;
+          c.textContent = orig.value;
+        }
+      });
+
+      // Replace inputs and textareas with static blocks to avoid html2canvas text clipping
+      snapshot.querySelectorAll("input").forEach((el) => {
+        const input = el as HTMLInputElement;
+        const display = document.createElement("div");
+        display.textContent = input.value || input.getAttribute("value") || "";
+        display.style.minHeight = "40px";
+        display.style.border = "1px solid hsl(var(--input))";
+        display.style.borderRadius = "var(--radius)";
+        display.style.padding = "6px 12px 10px"; // pt 6px, pb 10px
+        display.style.lineHeight = "1.5";
+        display.style.whiteSpace = "pre-wrap";
+        display.style.background = "#ffffff";
+        display.style.transform = "translateY(-1px)"; // nudge up for font baseline alignment
+        input.replaceWith(display);
+      });
+
+      snapshot.querySelectorAll("textarea").forEach((el) => {
+        const ta = el as HTMLTextAreaElement;
+        const display = document.createElement("div");
+        display.textContent = ta.value || ta.textContent || "";
+        display.style.minHeight = "40px";
+        display.style.border = "1px solid hsl(var(--input))";
+        display.style.borderRadius = "var(--radius)";
+        display.style.padding = "6px 12px 10px";
+        display.style.lineHeight = "1.5";
+        display.style.whiteSpace = "pre-wrap";
+        display.style.background = "#ffffff";
+        display.style.transform = "translateY(-1px)";
+        ta.replaceWith(display);
+      });
+
+      // Replace select triggers (Radix) with static labels
+      snapshot.querySelectorAll('button[aria-haspopup="listbox"]').forEach((btn) => {
+        const valueSpan = btn.querySelector("span");
+        const display = document.createElement("div");
+        display.textContent = valueSpan?.textContent || "";
+        display.style.minHeight = "40px";
+        display.style.border = "1px solid hsl(var(--input))";
+        display.style.borderRadius = "var(--radius)";
+        display.style.padding = "6px 12px 10px";
+        display.style.lineHeight = "1.5";
+        display.style.whiteSpace = "nowrap";
+        display.style.overflow = "hidden";
+        display.style.textOverflow = "ellipsis";
+        display.style.background = "#ffffff";
+        display.style.transform = "translateY(-1px)";
+        (btn as HTMLElement).replaceWith(display);
+      });
+
+      // Add a hidden off-screen container to render the snapshot
+      hiddenContainer = document.createElement("div");
+      hiddenContainer.style.position = "fixed";
+      hiddenContainer.style.left = "-10000px";
+      hiddenContainer.style.top = "0";
+      hiddenContainer.style.width = element.getBoundingClientRect().width + "px";
+      hiddenContainer.style.background = "#ffffff";
+      hiddenContainer.appendChild(snapshot);
+      document.body.appendChild(hiddenContainer);
+
+      // Temporary CSS to help avoid breaks and enforce line-height during rasterization
+      styleEl = document.createElement("style");
+      styleEl.textContent = `
+        .pdf-snapshot .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+        .pdf-snapshot * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      `;
+      document.head.appendChild(styleEl);
 
       const fileName = data.projectName 
         ? `${data.projectName}_Commissioning_Report.pdf`
@@ -265,40 +365,43 @@ const Index = () => {
       const opt = {
         margin: 10,
         filename: fileName,
-        image: { type: 'jpeg' as const, quality: 0.85 },
-        html2canvas: { 
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
           scale: 2,
           useCORS: true,
           logging: false,
-          windowWidth: 1400,
+          scrollY: 0,
+          letterRendering: true,
+          windowWidth: Math.max(document.documentElement.scrollWidth, element.scrollWidth),
           backgroundColor: '#ffffff',
         },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
+        jsPDF: {
+          unit: 'pt',
+          format: 'a4',
           orientation: 'portrait' as const,
           compress: true,
-        }
+        },
+        pagebreak: { mode: ['css', 'legacy'] as const, avoid: ['.avoid-break', 'tr', 'img'] },
       };
 
-      await html2pdf().set(opt).from(element).save();
-      
-      // Run visibility test after PDF generation
-      const container = document.getElementById("pdf-content");
-      if (container) {
-        const result = runPdfTextVisibilityTest(container);
-        if (!result.pass) {
-          console.warn("PDF text visibility issues detected:", result.issues);
-          toast.warning(`PDF text visibility issues: ${result.issues.length}. See console for details.`);
-        }
+      await html2pdf().set(opt).from(snapshot).save();
+
+      // Run visibility test on the snapshot used for export
+      const result = runPdfTextVisibilityTest(snapshot);
+      if (!result.pass) {
+        console.warn("PDF text visibility issues detected:", result.issues);
+        toast.warning(`PDF text visibility issues: ${result.issues.length}. See console for details.`);
       }
-      
+
       toast.dismiss(loadingToast);
       toast.success("PDF generated successfully!");
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.dismiss(loadingToast);
       toast.error("Failed to generate PDF");
+    } finally {
+      if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+      if (hiddenContainer && hiddenContainer.parentNode) hiddenContainer.parentNode.removeChild(hiddenContainer);
     }
   };
 
