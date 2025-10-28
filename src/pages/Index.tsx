@@ -331,6 +331,7 @@ const Index = () => {
         const isTextarea = origEl.tagName === 'TEXTAREA';
         const isInput = origEl.tagName === 'INPUT';
         const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
+        const isProductFilter = origEl.getAttribute('data-product-filter') === 'true';
 
         let text = '';
         if (isInput) {
@@ -340,8 +341,16 @@ const Index = () => {
           const ta = origEl as HTMLTextAreaElement;
           text = ta.value ?? ta.textContent ?? '';
         } else if (isSelectTrigger) {
-          const span = origEl.querySelector('span');
-          text = (span?.textContent ?? origEl.textContent ?? '').trim();
+          if (isProductFilter) {
+            // Product Type Filter: show selected text
+            const span = origEl.querySelector('span');
+            text = (span?.textContent ?? origEl.textContent ?? '').trim();
+          } else {
+            // Other comboboxes: hide completely
+            box.style.display = 'none';
+            cloneEl.replaceWith(box);
+            return;
+          }
         }
 
         box.textContent = text;
@@ -470,7 +479,7 @@ const Index = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
                   <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-full sm:w-[200px] h-10">
+                    <SelectTrigger className="w-full sm:w-[200px] h-10" data-product-filter="true">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
