@@ -340,7 +340,6 @@ const Index = () => {
           const ta = origEl as HTMLTextAreaElement;
           text = ta.value ?? ta.textContent ?? '';
         } else if (isSelectTrigger) {
-          // Extract selected value from select trigger
           const span = origEl.querySelector('span');
           text = (span?.textContent ?? origEl.textContent ?? '').trim();
         }
@@ -357,8 +356,6 @@ const Index = () => {
 
         cloneEl.replaceWith(box);
       });
-
-      // All comboboxes have been converted to text in the loop above, no additional processing needed
 
       // Add a hidden off-screen container to render the snapshot
       hiddenContainer = document.createElement("div");
