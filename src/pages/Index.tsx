@@ -49,6 +49,7 @@ const defaultData: ReportData = {
   ],
   inspectionDate: new Date(),
   commissionerSignature: "",
+  installerSignature: "",
   customerSignature: "",
   productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
 };
@@ -77,13 +78,17 @@ const Index = () => {
         if (!parsedData.productTypes) {
           parsedData.productTypes = ["Multi V", "AHU", "ISC", "Water", "H/Kit"];
         }
-        // Ensure all checklist items have productType
+        if (!parsedData.installerSignature) {
+          parsedData.installerSignature = "";
+        }
+        // Ensure all checklist items have productType and referenceImages
         if (parsedData.categories) {
           parsedData.categories = parsedData.categories.map((category: Category) => ({
             ...category,
             items: category.items.map((item: any) => ({
               ...item,
-              productType: item.productType || "Common"
+              productType: item.productType || "Common",
+              referenceImages: item.referenceImages || []
             }))
           }));
         }
@@ -498,6 +503,15 @@ const Index = () => {
               <SignatureCanvas
                 signature={data.commissionerSignature}
                 onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
+                disabled={!editMode}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Installer Signature:</label>
+              <SignatureCanvas
+                signature={data.installerSignature}
+                onSave={(signature) => setData({ ...data, installerSignature: signature })}
                 disabled={!editMode}
               />
             </div>

@@ -30,6 +30,7 @@ export interface ReportData {
   categories: Category[];
   inspectionDate: Date;
   commissionerSignature: string;
+  installerSignature: string;
   customerSignature: string;
   productTypes: string[];
 }

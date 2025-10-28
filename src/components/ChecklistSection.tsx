@@ -21,8 +21,8 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
   
   return (
     <div className="border border-border rounded-lg p-4 bg-card space-y-3">
-      <div className="flex items-start gap-3">
-        <div className="flex-1 space-y-2">
+      <div className="flex flex-col gap-3">
+        <div className="space-y-2">
           {editMode ? (
             <Input
               value={item.text}
@@ -54,8 +54,8 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer min-w-[60px]">
             <span className="text-sm">OK</span>
             <Checkbox
               checked={item.ok}
@@ -65,7 +65,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             />
           </label>
           
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer min-w-[60px]">
             <span className="text-sm">NG</span>
             <Checkbox
               checked={item.ng}
@@ -80,12 +80,13 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-2"
+                className="h-8 gap-1 text-xs sm:text-sm"
               >
                 <ImageIcon className="w-4 h-4" />
-                Reference
+                <span className="hidden sm:inline">Reference</span>
+                <span className="sm:hidden">Ref</span>
                 {item.referenceImages && item.referenceImages.length > 0 && (
-                  <span className="ml-1 text-xs">({item.referenceImages.length})</span>
+                  <span className="text-xs">({item.referenceImages.length})</span>
                 )}
               </Button>
             </DialogTrigger>
