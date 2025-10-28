@@ -44,7 +44,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             <Input
               value={item.text}
               onChange={(e) => onUpdate({ ...item, text: e.target.value })}
-              className="font-medium h-12 py-3 leading-[1.2] flex-1"
+              className="font-medium h-12 pt-3 pb-3.5 leading-[1.35] flex-1"
               placeholder="Checklist item"
             />
           ) : (
@@ -142,7 +142,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="w-full h-12 py-3 leading-[1.2]"
+          className="w-full h-12 pt-3 pb-3.5 leading-[1.35]"
         />
       </div>
 

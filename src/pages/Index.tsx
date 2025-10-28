@@ -16,7 +16,7 @@ import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTemplate } from "@/hooks/useTemplate";
-
+import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
 const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
 
@@ -295,6 +295,16 @@ const Index = () => {
         : "LGE_SAC_Commissioning_Report.pdf";
       pdf.save(fileName);
       
+      // Run visibility test after PDF generation
+      const container = document.getElementById("pdf-content");
+      if (container) {
+        const result = runPdfTextVisibilityTest(container);
+        if (!result.pass) {
+          console.warn("PDF text visibility issues detected:", result.issues);
+          toast.warning(`PDF text visibility issues: ${result.issues.length}. See console for details.`);
+        }
+      }
+      
       toast.dismiss(loadingToast);
       toast.success("PDF generated successfully!");
     } catch (error) {
@@ -412,7 +422,7 @@ const Index = () => {
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-14 py-3 text-base leading-[1.2]"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
@@ -421,7 +431,7 @@ const Index = () => {
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-14 py-3 text-base leading-[1.2]"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
@@ -431,7 +441,7 @@ const Index = () => {
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-14 py-3 text-base leading-[1.2]"
+                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
                   />
                   <Button
                     variant="outline"
