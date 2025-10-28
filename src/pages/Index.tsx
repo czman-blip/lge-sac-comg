@@ -166,7 +166,7 @@ const Index = () => {
       return;
     }
 
-    toast.loading("Getting your location...");
+    const loadingToast = toast.loading("Getting your location...");
     
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -179,6 +179,8 @@ const Index = () => {
           );
           const data = await response.json();
           
+          toast.dismiss(loadingToast);
+          
           if (data.display_name) {
             setData(prev => ({ ...prev, address: data.display_name }));
             toast.success("Location retrieved successfully!");
@@ -187,11 +189,13 @@ const Index = () => {
             toast.success("Coordinates retrieved!");
           }
         } catch (error) {
+          toast.dismiss(loadingToast);
           setData(prev => ({ ...prev, address: `${latitude}, ${longitude}` }));
           toast.success("Coordinates retrieved!");
         }
       },
       (error) => {
+        toast.dismiss(loadingToast);
         toast.error("Unable to retrieve your location");
         console.error("Geolocation error:", error);
       }
@@ -354,7 +358,7 @@ const Index = () => {
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-14 py-3 text-base leading-normal"
+                  className="h-14 py-3 text-base leading-[1.2]"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
@@ -363,7 +367,7 @@ const Index = () => {
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-14 py-3 text-base leading-normal"
+                  className="h-14 py-3 text-base leading-[1.2]"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
@@ -373,7 +377,7 @@ const Index = () => {
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-14 py-3 text-base leading-normal"
+                    className="h-14 py-3 text-base leading-[1.2]"
                   />
                   <Button
                     variant="outline"
@@ -417,7 +421,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter model"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-normal"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
                       <td className="border border-border p-3 align-middle">
@@ -429,7 +433,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-normal"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
                     </tr>
