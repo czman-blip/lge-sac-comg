@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
 const defaultData: ReportData = {
+  title: "LGE SAC Commissioning Report",
   projectName: "",
   opportunityNumber: "",
   address: "",
@@ -70,6 +71,9 @@ const Index = () => {
           parsedData.inspectionDate = new Date(parsedData.inspectionDate);
         }
         // Ensure backward compatibility with old data
+        if (!parsedData.title) {
+          parsedData.title = "LGE SAC Commissioning Report";
+        }
         if (!parsedData.productTypes) {
           parsedData.productTypes = ["Multi V", "AHU", "ISC", "Water", "H/Kit"];
         }
@@ -246,9 +250,17 @@ const Index = () => {
           <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-3xl font-bold text-primary">
-                  LGE SAC Commissioning Report
-                </h1>
+                {editMode ? (
+                  <Input
+                    value={data.title}
+                    onChange={(e) => setData({ ...data, title: e.target.value })}
+                    className="text-3xl font-bold text-primary h-14"
+                  />
+                ) : (
+                  <h1 className="text-3xl font-bold text-primary">
+                    {data.title}
+                  </h1>
+                )}
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant={editMode ? "default" : "outline"}

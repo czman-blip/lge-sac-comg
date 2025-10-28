@@ -3,8 +3,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageUpload } from "./ImageUpload";
-import { Trash2 } from "lucide-react";
+import { Trash2, Image as ImageIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState } from "react";
 
 interface ChecklistSectionProps {
   item: ChecklistItem;
@@ -15,6 +17,8 @@ interface ChecklistSectionProps {
 }
 
 export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTypes }: ChecklistSectionProps) => {
+  const [showReferenceDialog, setShowReferenceDialog] = useState(false);
+  
   return (
     <div className="border border-border rounded-lg p-4 bg-card space-y-3">
       <div className="flex items-start gap-3">
@@ -70,6 +74,53 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               }
             />
           </label>
+          
+          <Dialog open={showReferenceDialog} onOpenChange={setShowReferenceDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2"
+              >
+                <ImageIcon className="w-4 h-4" />
+                Reference
+                {item.referenceImages && item.referenceImages.length > 0 && (
+                  <span className="ml-1 text-xs">({item.referenceImages.length})</span>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Reference Images</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {editMode ? (
+                  <ImageUpload
+                    images={item.referenceImages || []}
+                    onImagesChange={(images) => onUpdate({ ...item, referenceImages: images })}
+                    disabled={false}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {item.referenceImages && item.referenceImages.length > 0 ? (
+                      item.referenceImages.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Reference ${idx + 1}`}
+                          className="w-full h-auto rounded-lg border border-border"
+                        />
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No reference images available
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
           
           {editMode && (
             <Button

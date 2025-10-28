@@ -12,6 +12,7 @@ export interface ChecklistItem {
   issue: string;
   images: string[];
   productType: string;
+  referenceImages?: string[];
 }
 
 export interface Category {
@@ -21,6 +22,7 @@ export interface Category {
 }
 
 export interface ReportData {
+  title: string;
   projectName: string;
   opportunityNumber: string;
   address: string;
