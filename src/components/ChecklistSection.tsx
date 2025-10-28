@@ -136,13 +136,13 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
       </div>
 
       {/* 4. Issue field */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium">Issue:</label>
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
         <Input
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="w-full h-12 pt-3 pb-3.5 leading-[1.35]"
+          className="flex-1 h-12 pt-3 pb-3.5 leading-[1.35]"
         />
       </div>
 
