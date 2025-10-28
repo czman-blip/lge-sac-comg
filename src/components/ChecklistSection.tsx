@@ -29,8 +29,8 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             onValueChange={(value) => onUpdate({ ...item, productType: value })}
             disabled={!editMode}
           >
-            <SelectTrigger className="w-full sm:w-[140px] h-12 py-3 leading-[1.2]">
-              <SelectValue />
+            <SelectTrigger className="w-full sm:w-[140px] h-14 py-3">
+              <SelectValue className="text-base leading-normal" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Common">Common</SelectItem>

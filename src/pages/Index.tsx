@@ -251,16 +251,19 @@ const Index = () => {
   };
 
   const generatePDF = async () => {
+    const loadingToast = toast.loading("Generating PDF...");
     try {
-      toast.loading("Generating PDF...");
       const element = document.getElementById("pdf-content");
-      if (!element) return;
+      if (!element) {
+        toast.dismiss(loadingToast);
+        return;
+      }
 
       const canvas = await html2canvas(element, {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
         logging: false,
-        windowWidth: 1200,
+        windowWidth: 1400,
         backgroundColor: '#ffffff',
       });
 
@@ -291,9 +294,12 @@ const Index = () => {
         ? `${data.projectName}_Commissioning_Report.pdf`
         : "LGE_SAC_Commissioning_Report.pdf";
       pdf.save(fileName);
+      
+      toast.dismiss(loadingToast);
       toast.success("PDF generated successfully!");
     } catch (error) {
       console.error("PDF generation failed:", error);
+      toast.dismiss(loadingToast);
       toast.error("Failed to generate PDF");
     }
   };
@@ -343,8 +349,8 @@ const Index = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
                   <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-full sm:w-[200px] h-12 py-3">
-                      <SelectValue />
+                    <SelectTrigger className="w-full sm:w-[200px] h-14 py-3">
+                      <SelectValue className="text-base leading-normal" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Products</SelectItem>
