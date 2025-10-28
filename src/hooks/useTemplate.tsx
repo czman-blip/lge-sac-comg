@@ -76,12 +76,19 @@ export const useTemplate = () => {
       await supabase.from("template_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("template_categories").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
-      // Insert categories
-      const categoryInserts = categories.map((cat, index) => ({
-        id: cat.id,
-        name: cat.name,
-        sort_order: index,
-      }));
+      // Create ID mapping for categories (old ID -> new UUID)
+      const categoryIdMap = new Map<string, string>();
+      
+      // Insert categories with new UUIDs
+      const categoryInserts = categories.map((cat, index) => {
+        const newId = crypto.randomUUID();
+        categoryIdMap.set(cat.id, newId);
+        return {
+          id: newId,
+          name: cat.name,
+          sort_order: index,
+        };
+      });
 
       const { error: catError } = await supabase
         .from("template_categories")
@@ -89,11 +96,11 @@ export const useTemplate = () => {
 
       if (catError) throw catError;
 
-      // Insert items
+      // Insert items with new UUIDs and mapped category IDs
       const itemInserts = categories.flatMap((cat) =>
         cat.items.map((item, index) => ({
-          id: item.id,
-          category_id: cat.id,
+          id: crypto.randomUUID(),
+          category_id: categoryIdMap.get(cat.id) || cat.id,
           text: item.text,
           product_type: item.productType || "Common",
           reference_images: item.referenceImages || [],
