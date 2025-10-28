@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
 
@@ -30,24 +31,25 @@ const defaultData: ReportData = {
       id: "cat-1",
       name: "Installation",
       items: [
-        { id: "item-1", text: "Is SVC area secured?", ok: false, ng: false, issue: "", images: [] },
-        { id: "item-2", text: "Are all connections tight?", ok: false, ng: false, issue: "", images: [] },
-        { id: "item-3", text: "Is drainage properly installed?", ok: false, ng: false, issue: "", images: [] },
+        { id: "item-1", text: "Is SVC area secured?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-2", text: "Are all connections tight?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-3", text: "Is drainage properly installed?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
       ],
     },
     {
       id: "cat-2",
       name: "Start-up",
       items: [
-        { id: "item-4", text: "System pressure check completed?", ok: false, ng: false, issue: "", images: [] },
-        { id: "item-5", text: "Refrigerant charge verified?", ok: false, ng: false, issue: "", images: [] },
-        { id: "item-6", text: "Test run successful?", ok: false, ng: false, issue: "", images: [] },
+        { id: "item-4", text: "System pressure check completed?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-5", text: "Refrigerant charge verified?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-6", text: "Test run successful?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
       ],
     },
   ],
   inspectionDate: new Date(),
   commissionerSignature: "",
   customerSignature: "",
+  productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
 };
 
 const Index = () => {
@@ -55,6 +57,8 @@ const Index = () => {
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState<string>("all");
+  const [newProductType, setNewProductType] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -104,6 +108,33 @@ const Index = () => {
   const deleteCategory = (index: number) => {
     const newCategories = data.categories.filter((_, i) => i !== index);
     setData({ ...data, categories: newCategories });
+  };
+
+  const addProductType = () => {
+    if (newProductType.trim() && !data.productTypes.includes(newProductType.trim())) {
+      setData({ ...data, productTypes: [...data.productTypes, newProductType.trim()] });
+      setNewProductType("");
+      toast.success("Product type added");
+    }
+  };
+
+  const deleteProductType = (type: string) => {
+    const newProductTypes = data.productTypes.filter(t => t !== type);
+    setData({ ...data, productTypes: newProductTypes });
+    toast.success("Product type deleted");
+  };
+
+  const getFilteredCategories = () => {
+    if (selectedProductType === "all") {
+      return data.categories;
+    }
+    
+    return data.categories.map(category => ({
+      ...category,
+      items: category.items.filter(item => 
+        item.productType === "Common" || item.productType === selectedProductType
+      )
+    })).filter(category => category.items.length > 0);
   };
 
   const getCurrentLocation = () => {
@@ -199,27 +230,80 @@ const Index = () => {
         <div id="pdf-content" className="space-y-6">
           {/* Header */}
           <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h1 className="text-3xl font-bold text-primary">
-                LGE SAC Commissioning Report
-              </h1>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  variant={editMode ? "default" : "outline"}
-                  onClick={handleEditModeToggle}
-                  className="flex-1 sm:flex-none"
-                >
-                  {editMode ? "Edit mode" : "User mode"}
-                </Button>
-                {editMode && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-3xl font-bold text-primary">
+                  LGE SAC Commissioning Report
+                </h1>
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowChangePasswordDialog(true)}
-                    title="Change password"
+                    variant={editMode ? "default" : "outline"}
+                    onClick={handleEditModeToggle}
+                    className="flex-1 sm:flex-none"
                   >
-                    <KeyRound className="w-4 h-4" />
+                    {editMode ? "Edit mode" : "User mode"}
                   </Button>
+                  {editMode && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowChangePasswordDialog(true)}
+                      title="Change password"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
+                  <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Products</SelectItem>
+                      {data.productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {editMode && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Manage Product Types:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {data.productTypes.map(type => (
+                        <div key={type} className="flex items-center gap-1 bg-muted px-3 py-1 rounded-md">
+                          <span className="text-sm">{type}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0"
+                            onClick={() => deleteProductType(type)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newProductType}
+                        onChange={(e) => setNewProductType(e.target.value)}
+                        placeholder="Add new product type"
+                        className="h-10"
+                        onKeyPress={(e) => e.key === 'Enter' && addProductType()}
+                      />
+                      <Button onClick={addProductType} variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -326,15 +410,20 @@ const Index = () => {
 
           {/* Categories */}
           <div className="space-y-6">
-            {data.categories.map((category, index) => (
-              <CategorySection
-                key={category.id}
-                category={category}
-                onUpdate={(updated) => updateCategory(index, updated)}
-                onDelete={() => deleteCategory(index)}
-                editMode={editMode}
-              />
-            ))}
+            {getFilteredCategories().map((category, index) => {
+              const originalIndex = data.categories.findIndex(c => c.id === category.id);
+              return (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  onUpdate={(updated) => updateCategory(originalIndex, updated)}
+                  onDelete={() => deleteCategory(originalIndex)}
+                  editMode={editMode}
+                  productTypes={data.productTypes}
+                  selectedFilter={selectedProductType}
+                />
+              );
+            })}
 
             {editMode && (
               <Button

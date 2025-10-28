@@ -9,9 +9,11 @@ interface CategorySectionProps {
   onUpdate: (category: Category) => void;
   onDelete: () => void;
   editMode: boolean;
+  productTypes: string[];
+  selectedFilter: string;
 }
 
-export const CategorySection = ({ category, onUpdate, onDelete, editMode }: CategorySectionProps) => {
+export const CategorySection = ({ category, onUpdate, onDelete, editMode, productTypes, selectedFilter }: CategorySectionProps) => {
   const addItem = () => {
     const newItem: ChecklistItem = {
       id: `item-${Date.now()}`,
@@ -20,6 +22,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode }: Cate
       ng: false,
       issue: "",
       images: [],
+      productType: "Common",
     };
     onUpdate({ ...category, items: [...category.items, newItem] });
   };
@@ -69,6 +72,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode }: Cate
             onUpdate={(updatedItem) => updateItem(index, updatedItem)}
             onDelete={() => deleteItem(index)}
             editMode={editMode}
+            productTypes={productTypes}
           />
         ))}
 

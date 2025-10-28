@@ -4,19 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ChecklistSectionProps {
   item: ChecklistItem;
   onUpdate: (item: ChecklistItem) => void;
   onDelete: () => void;
   editMode: boolean;
+  productTypes: string[];
 }
 
-export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: ChecklistSectionProps) => {
+export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTypes }: ChecklistSectionProps) => {
   return (
     <div className="border border-border rounded-lg p-4 bg-card space-y-3">
       <div className="flex items-start gap-3">
-        <div className="flex-1">
+        <div className="flex-1 space-y-2">
           {editMode ? (
             <Input
               value={item.text}
@@ -27,6 +29,25 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: Checkli
           ) : (
             <p className="font-medium">{item.text}</p>
           )}
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium whitespace-nowrap">Product Type:</label>
+            <Select 
+              value={item.productType || "Common"} 
+              onValueChange={(value) => onUpdate({ ...item, productType: value })}
+              disabled={!editMode}
+            >
+              <SelectTrigger className="w-[150px] h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Common">Common</SelectItem>
+                {productTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">

@@ -11,6 +11,7 @@ export interface ChecklistItem {
   ng: boolean;
   issue: string;
   images: string[];
+  productType: string;
 }
 
 export interface Category {
@@ -28,4 +29,5 @@ export interface ReportData {
   inspectionDate: Date;
   commissionerSignature: string;
   customerSignature: string;
+  productTypes: string[];
 }
