@@ -349,8 +349,8 @@ const Index = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
                   <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-full sm:w-[200px] h-14 py-3">
-                      <SelectValue className="text-base leading-normal" />
+                    <SelectTrigger className="w-full sm:w-[200px] h-10">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Products</SelectItem>
