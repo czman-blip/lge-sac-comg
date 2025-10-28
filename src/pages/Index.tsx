@@ -69,6 +69,20 @@ const Index = () => {
         if (parsedData.inspectionDate) {
           parsedData.inspectionDate = new Date(parsedData.inspectionDate);
         }
+        // Ensure backward compatibility with old data
+        if (!parsedData.productTypes) {
+          parsedData.productTypes = ["Multi V", "AHU", "ISC", "Water", "H/Kit"];
+        }
+        // Ensure all checklist items have productType
+        if (parsedData.categories) {
+          parsedData.categories = parsedData.categories.map((category: Category) => ({
+            ...category,
+            items: category.items.map((item: any) => ({
+              ...item,
+              productType: item.productType || "Common"
+            }))
+          }));
+        }
         setData(parsedData);
       } catch (e) {
         console.error("Failed to load saved data:", e);
