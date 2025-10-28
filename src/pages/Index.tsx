@@ -332,11 +332,6 @@ const Index = () => {
         const isInput = origEl.tagName === 'INPUT';
         const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
 
-        // Skip select triggers here; we'll handle them separately (filter as text, others removed)
-        if (isSelectTrigger) {
-          return;
-        }
-
         let text = '';
         if (isInput) {
           const input = origEl as HTMLInputElement;
@@ -344,6 +339,10 @@ const Index = () => {
         } else if (isTextarea) {
           const ta = origEl as HTMLTextAreaElement;
           text = ta.value ?? ta.textContent ?? '';
+        } else if (isSelectTrigger) {
+          // Extract selected value from select trigger
+          const span = origEl.querySelector('span');
+          text = (span?.textContent ?? origEl.textContent ?? '').trim();
         }
 
         box.textContent = text;
@@ -359,22 +358,7 @@ const Index = () => {
         cloneEl.replaceWith(box);
       });
 
-      // Render Product Type Filter value as plain text and remove all comboboxes
-      const selectedFilterText = selectedProductType === 'all' ? 'All Products' : selectedProductType;
-      const filterLabel = Array.from(snapshot.querySelectorAll('label')).find((l) => ((l.textContent || '').trim().startsWith('Product Type Filter')));
-      if (filterLabel && filterLabel.parentElement) {
-        const filterContainer = filterLabel.parentElement;
-        filterContainer.querySelectorAll('button[aria-haspopup="listbox"]').forEach((btn) => btn.remove());
-        const span = document.createElement('span');
-        span.textContent = ' ' + selectedFilterText;
-        span.style.display = 'inline-block';
-        span.style.marginLeft = '6px';
-        span.style.lineHeight = '1.5';
-        span.style.transform = 'translateY(-1px)';
-        filterLabel.insertAdjacentElement('afterend', span);
-      }
-      // Remove all remaining select triggers across the document
-      snapshot.querySelectorAll('button[aria-haspopup="listbox"]').forEach((btn) => (btn as HTMLElement).remove());
+      // All comboboxes have been converted to text in the loop above, no additional processing needed
 
       // Add a hidden off-screen container to render the snapshot
       hiddenContainer = document.createElement("div");
