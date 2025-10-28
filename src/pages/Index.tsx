@@ -6,8 +6,7 @@ import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
 import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -259,41 +258,30 @@ const Index = () => {
         return;
       }
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 1400,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.85);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-      heightLeft -= 297;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-      }
-
       const fileName = data.projectName 
         ? `${data.projectName}_Commissioning_Report.pdf`
         : "LGE_SAC_Commissioning_Report.pdf";
-      pdf.save(fileName);
+
+      const opt = {
+        margin: 10,
+        filename: fileName,
+        image: { type: 'jpeg' as const, quality: 0.85 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          windowWidth: 1400,
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' as const,
+          compress: true,
+        }
+      };
+
+      await html2pdf().set(opt).from(element).save();
       
       // Run visibility test after PDF generation
       const container = document.getElementById("pdf-content");
