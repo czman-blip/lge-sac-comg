@@ -288,10 +288,10 @@ const Index = () => {
               </div>
               
               <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
                   <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-full sm:w-[200px] h-12 py-3">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

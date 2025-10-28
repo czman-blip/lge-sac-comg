@@ -20,43 +20,42 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
   const [showReferenceDialog, setShowReferenceDialog] = useState(false);
   
   return (
-    <div className="border border-border rounded-lg p-4 bg-card space-y-3">
+    <div className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3">
       <div className="flex flex-col gap-3">
-        <div className="space-y-2">
+        {/* 1. Product Type and Checklist Item in one line */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+          <Select 
+            value={item.productType || "Common"} 
+            onValueChange={(value) => onUpdate({ ...item, productType: value })}
+            disabled={!editMode}
+          >
+            <SelectTrigger className="w-full sm:w-[140px] h-12 py-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Common">Common</SelectItem>
+              {productTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
           {editMode ? (
             <Input
               value={item.text}
               onChange={(e) => onUpdate({ ...item, text: e.target.value })}
-              className="font-medium h-14 py-3 leading-normal"
+              className="font-medium h-12 py-3 leading-normal flex-1"
               placeholder="Checklist item"
             />
           ) : (
-            <p className="font-medium">{item.text}</p>
+            <p className="font-medium flex-1 py-2">{item.text}</p>
           )}
-          
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium whitespace-nowrap">Product Type:</label>
-            <Select 
-              value={item.productType || "Common"} 
-              onValueChange={(value) => onUpdate({ ...item, productType: value })}
-              disabled={!editMode}
-            >
-              <SelectTrigger className="w-[150px] h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Common">Common</SelectItem>
-                {productTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer min-w-[60px]">
-            <span className="text-sm">OK</span>
+        {/* 3. OK, NG, Reference buttons */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <label className="flex items-center gap-2 cursor-pointer min-w-[70px]">
+            <span className="text-sm font-medium">OK</span>
             <Checkbox
               checked={item.ok}
               onCheckedChange={(checked) =>
@@ -65,8 +64,8 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             />
           </label>
           
-          <label className="flex items-center gap-2 cursor-pointer min-w-[60px]">
-            <span className="text-sm">NG</span>
+          <label className="flex items-center gap-2 cursor-pointer min-w-[70px]">
+            <span className="text-sm font-medium">NG</span>
             <Checkbox
               checked={item.ng}
               onCheckedChange={(checked) =>
@@ -136,17 +135,19 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
         </div>
       </div>
 
-      <div className="flex items-center gap-3 min-h-[44px]">
-        <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
+      {/* 4. Issue field */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Issue:</label>
         <Input
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="flex-1 h-14 py-3 leading-normal"
+          className="w-full h-12 py-3 leading-normal"
         />
       </div>
 
-      <div className="mt-2">
+      {/* 5. Add Image */}
+      <div>
         <ImageUpload
           images={item.images}
           onImagesChange={(images) => onUpdate({ ...item, images })}
