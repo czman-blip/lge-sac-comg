@@ -15,8 +15,10 @@ import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTemplate } from "@/hooks/useTemplate";
 
 const STORAGE_KEY = "lge-sac-commissioning-report";
+const LOCAL_DATA_KEY = "lge-sac-local-data";
 
 const defaultData: ReportData = {
   title: "LGE SAC Commissioning Report",
@@ -61,46 +63,91 @@ const Index = () => {
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("all");
   const [newProductType, setNewProductType] = useState("");
+  const { loadTemplate, saveTemplate, isLoading } = useTemplate();
 
+  // Load template from server and merge with local data
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsedData = JSON.parse(saved);
-        // Convert inspectionDate string back to Date object
-        if (parsedData.inspectionDate) {
-          parsedData.inspectionDate = new Date(parsedData.inspectionDate);
+    const initializeData = async () => {
+      const template = await loadTemplate();
+      
+      // Load local inspection data (OK, NG, Issue, Images)
+      const localData = localStorage.getItem(LOCAL_DATA_KEY);
+      let localInspectionData: any = {};
+      
+      if (localData) {
+        try {
+          localInspectionData = JSON.parse(localData);
+        } catch (e) {
+          console.error("Failed to parse local data:", e);
         }
-        // Ensure backward compatibility with old data
-        if (!parsedData.title) {
-          parsedData.title = "LGE SAC Commissioning Report";
-        }
-        if (!parsedData.productTypes) {
-          parsedData.productTypes = ["Multi V", "AHU", "ISC", "Water", "H/Kit"];
-        }
-        if (!parsedData.installerSignature) {
-          parsedData.installerSignature = "";
-        }
-        // Ensure all checklist items have productType and referenceImages
-        if (parsedData.categories) {
-          parsedData.categories = parsedData.categories.map((category: Category) => ({
-            ...category,
-            items: category.items.map((item: any) => ({
-              ...item,
-              productType: item.productType || "Common",
-              referenceImages: item.referenceImages || []
-            }))
-          }));
-        }
-        setData(parsedData);
-      } catch (e) {
-        console.error("Failed to load saved data:", e);
       }
-    }
+
+      // Load project info from old storage for backward compatibility
+      const saved = localStorage.getItem(STORAGE_KEY);
+      let projectInfo: any = {};
+      
+      if (saved) {
+        try {
+          const parsedData = JSON.parse(saved);
+          projectInfo = {
+            title: parsedData.title || "LGE SAC Commissioning Report",
+            projectName: parsedData.projectName || "",
+            opportunityNumber: parsedData.opportunityNumber || "",
+            address: parsedData.address || "",
+            products: parsedData.products || defaultData.products,
+            inspectionDate: parsedData.inspectionDate ? new Date(parsedData.inspectionDate) : new Date(),
+            commissionerSignature: parsedData.commissionerSignature || "",
+            installerSignature: parsedData.installerSignature || "",
+            customerSignature: parsedData.customerSignature || "",
+            productTypes: parsedData.productTypes || ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
+          };
+        } catch (e) {
+          console.error("Failed to load saved data:", e);
+        }
+      }
+
+      // Merge template with local inspection data
+      const mergedCategories = (template.length > 0 ? template : defaultData.categories).map(category => ({
+        ...category,
+        items: category.items.map(item => {
+          const localItem = localInspectionData[item.id];
+          return {
+            ...item,
+            ok: localItem?.ok || false,
+            ng: localItem?.ng || false,
+            issue: localItem?.issue || "",
+            images: localItem?.images || [],
+          };
+        }),
+      }));
+
+      setData({
+        ...defaultData,
+        ...projectInfo,
+        categories: mergedCategories,
+      });
+    };
+
+    initializeData();
   }, []);
 
+  // Save all data to localStorage for backward compatibility
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    
+    // Save local inspection data separately
+    const localInspectionData: any = {};
+    data.categories.forEach(category => {
+      category.items.forEach(item => {
+        localInspectionData[item.id] = {
+          ok: item.ok,
+          ng: item.ng,
+          issue: item.issue,
+          images: item.images,
+        };
+      });
+    });
+    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(localInspectionData));
   }, [data]);
 
   const handleEditModeToggle = () => {
@@ -108,7 +155,8 @@ const Index = () => {
       // Entering edit mode - always ask for password
       setShowPasswordDialog(true);
     } else {
-      // Exiting edit mode
+      // Exiting edit mode - save template to server
+      saveTemplate(data.categories);
       setEditMode(false);
     }
   };
