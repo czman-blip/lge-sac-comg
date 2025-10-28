@@ -251,9 +251,12 @@ const Index = () => {
 
   const generatePDF = async () => {
     const loadingToast = toast.loading("Generating PDF...");
-    // Keep all existing features, only rebuild the PDF pipeline for robust text rendering
+    // Only rebuild the PDF pipeline for robust text rendering; keep all other features intact
     let hiddenContainer: HTMLDivElement | null = null;
     let styleEl: HTMLStyleElement | null = null;
+    // Track elements we tag so we can clean them after
+    const tagged: HTMLElement[] = [];
+
     try {
       const element = document.getElementById("pdf-content");
       if (!element) {
@@ -261,83 +264,97 @@ const Index = () => {
         return;
       }
 
+      // Ensure fonts are fully loaded before rasterization
       const anyDoc = document as any;
       if (anyDoc.fonts && anyDoc.fonts.ready) {
         try { await anyDoc.fonts.ready; } catch {}
       }
 
-      // Create a deep clone so we can safely normalize form controls for PDF
+      // Tag originals with stable ids so we can map clone -> original
+      let idCounter = 0;
+      element.querySelectorAll<HTMLElement>('input, textarea, button[aria-haspopup="listbox"]').forEach((el) => {
+        idCounter += 1;
+        el.setAttribute('data-pdf-id', String(idCounter));
+        tagged.push(el);
+      });
+
+      // Deep clone and normalize inside the clone using the original metrics
       const snapshot = element.cloneNode(true) as HTMLElement;
       snapshot.classList.add("pdf-snapshot");
 
-      // Sync live values from the original DOM into the snapshot before replacement
-      const origInputs = element.querySelectorAll<HTMLInputElement>("input");
-      const cloneInputs = snapshot.querySelectorAll<HTMLInputElement>("input");
-      origInputs.forEach((orig, i) => {
-        const c = cloneInputs[i];
-        if (c) {
-          c.value = orig.value;
-          if (!c.getAttribute("value")) c.setAttribute("value", orig.value);
+      const getOriginal = (id: string) => element.querySelector<HTMLElement>(`[data-pdf-id="${id}"]`)!;
+
+      snapshot.querySelectorAll<HTMLElement>('[data-pdf-id]').forEach((cloneEl) => {
+        const id = cloneEl.getAttribute('data-pdf-id')!;
+        const origEl = getOriginal(id);
+        const cs = getComputedStyle(origEl);
+        const rect = origEl.getBoundingClientRect();
+
+        // Compute robust text metrics
+        const fontSize = parseFloat(cs.fontSize || '16');
+        const lineH = cs.lineHeight === 'normal' ? Math.round(fontSize * 1.5) : Math.round(parseFloat(cs.lineHeight || String(fontSize * 1.5)));
+        const pt = parseFloat(cs.paddingTop || '0');
+        const pb = parseFloat(cs.paddingBottom || '0');
+        const pl = parseFloat(cs.paddingLeft || '0');
+        const pr = parseFloat(cs.paddingRight || '0');
+        const bt = parseFloat(cs.borderTopWidth || '0');
+        const bb = parseFloat(cs.borderBottomWidth || '0');
+        const bl = parseFloat(cs.borderLeftWidth || '0');
+        const br = parseFloat(cs.borderRightWidth || '0');
+
+        // Build static display box to prevent input/select baseline clipping
+        const box = document.createElement('div');
+        box.style.boxSizing = 'border-box';
+        box.style.height = `${Math.ceil(rect.height)}px`;
+        box.style.width = `${Math.ceil(rect.width)}px`;
+        box.style.borderStyle = 'solid';
+        box.style.borderWidth = `${bt}px ${br}px ${bb}px ${bl}px`;
+        box.style.borderColor = cs.borderColor || 'hsl(var(--input))';
+        box.style.borderRadius = cs.borderRadius || 'var(--radius)';
+        // Bias padding slightly to the bottom to avoid visual clipping
+        const adjTop = Math.max(0, pt - 1);
+        const adjBottom = pb + 2;
+        box.style.paddingTop = `${adjTop}px`;
+        box.style.paddingBottom = `${adjBottom}px`;
+        box.style.paddingLeft = `${pl}px`;
+        box.style.paddingRight = `${pr}px`;
+        box.style.background = cs.backgroundColor || '#ffffff';
+        box.style.color = cs.color || '#000';
+        box.style.fontFamily = cs.fontFamily;
+        box.style.fontSize = cs.fontSize;
+        box.style.fontWeight = cs.fontWeight;
+        box.style.letterSpacing = cs.letterSpacing;
+        box.style.lineHeight = `${lineH}px`;
+        box.style.transform = 'translateY(-1px)';
+        box.style.display = 'block';
+
+        const isTextarea = origEl.tagName === 'TEXTAREA';
+        const isInput = origEl.tagName === 'INPUT';
+        const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
+
+        let text = '';
+        if (isInput) {
+          const input = origEl as HTMLInputElement;
+          text = input.value ?? input.getAttribute('value') ?? '';
+        } else if (isTextarea) {
+          const ta = origEl as HTMLTextAreaElement;
+          text = ta.value ?? ta.textContent ?? '';
+        } else if (isSelectTrigger) {
+          const span = origEl.querySelector('span');
+          text = (span?.textContent ?? origEl.textContent ?? '').trim();
         }
-      });
 
-      const origTextareas = element.querySelectorAll<HTMLTextAreaElement>("textarea");
-      const cloneTextareas = snapshot.querySelectorAll<HTMLTextAreaElement>("textarea");
-      origTextareas.forEach((orig, i) => {
-        const c = cloneTextareas[i];
-        if (c) {
-          c.value = orig.value;
-          c.textContent = orig.value;
+        box.textContent = text;
+        if (isTextarea) {
+          box.style.whiteSpace = 'pre-wrap';
+          box.style.overflow = 'visible';
+        } else {
+          box.style.whiteSpace = 'nowrap';
+          box.style.overflow = 'hidden';
+          box.style.textOverflow = 'ellipsis';
         }
-      });
 
-      // Replace inputs and textareas with static blocks to avoid html2canvas text clipping
-      snapshot.querySelectorAll("input").forEach((el) => {
-        const input = el as HTMLInputElement;
-        const display = document.createElement("div");
-        display.textContent = input.value || input.getAttribute("value") || "";
-        display.style.minHeight = "40px";
-        display.style.border = "1px solid hsl(var(--input))";
-        display.style.borderRadius = "var(--radius)";
-        display.style.padding = "6px 12px 10px"; // pt 6px, pb 10px
-        display.style.lineHeight = "1.5";
-        display.style.whiteSpace = "pre-wrap";
-        display.style.background = "#ffffff";
-        display.style.transform = "translateY(-1px)"; // nudge up for font baseline alignment
-        input.replaceWith(display);
-      });
-
-      snapshot.querySelectorAll("textarea").forEach((el) => {
-        const ta = el as HTMLTextAreaElement;
-        const display = document.createElement("div");
-        display.textContent = ta.value || ta.textContent || "";
-        display.style.minHeight = "40px";
-        display.style.border = "1px solid hsl(var(--input))";
-        display.style.borderRadius = "var(--radius)";
-        display.style.padding = "6px 12px 10px";
-        display.style.lineHeight = "1.5";
-        display.style.whiteSpace = "pre-wrap";
-        display.style.background = "#ffffff";
-        display.style.transform = "translateY(-1px)";
-        ta.replaceWith(display);
-      });
-
-      // Replace select triggers (Radix) with static labels
-      snapshot.querySelectorAll('button[aria-haspopup="listbox"]').forEach((btn) => {
-        const valueSpan = btn.querySelector("span");
-        const display = document.createElement("div");
-        display.textContent = valueSpan?.textContent || "";
-        display.style.minHeight = "40px";
-        display.style.border = "1px solid hsl(var(--input))";
-        display.style.borderRadius = "var(--radius)";
-        display.style.padding = "6px 12px 10px";
-        display.style.lineHeight = "1.5";
-        display.style.whiteSpace = "nowrap";
-        display.style.overflow = "hidden";
-        display.style.textOverflow = "ellipsis";
-        display.style.background = "#ffffff";
-        display.style.transform = "translateY(-1px)";
-        (btn as HTMLElement).replaceWith(display);
+        cloneEl.replaceWith(box);
       });
 
       // Add a hidden off-screen container to render the snapshot
@@ -350,7 +367,7 @@ const Index = () => {
       hiddenContainer.appendChild(snapshot);
       document.body.appendChild(hiddenContainer);
 
-      // Temporary CSS to help avoid breaks and enforce line-height during rasterization
+      // Temporary CSS to help avoid breaks and enforce color accuracy during rasterization
       styleEl = document.createElement("style");
       styleEl.textContent = `
         .pdf-snapshot .avoid-break { break-inside: avoid; page-break-inside: avoid; }
@@ -362,12 +379,13 @@ const Index = () => {
         ? `${data.projectName}_Commissioning_Report.pdf`
         : "LGE_SAC_Commissioning_Report.pdf";
 
+      const scale = Math.max(2, Math.min(3, (window.devicePixelRatio || 2)));
       const opt = {
         margin: 10,
         filename: fileName,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: {
-          scale: 2,
+          scale,
           useCORS: true,
           logging: false,
           scrollY: 0,
@@ -381,7 +399,7 @@ const Index = () => {
           orientation: 'portrait' as const,
           compress: true,
         },
-        pagebreak: { mode: ['css', 'legacy'] as const, avoid: ['.avoid-break', 'tr', 'img'] },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as const, avoid: ['.avoid-break', 'tr', 'img'] },
       };
 
       await html2pdf().set(opt).from(snapshot).save();
@@ -400,6 +418,8 @@ const Index = () => {
       toast.dismiss(loadingToast);
       toast.error("Failed to generate PDF");
     } finally {
+      // Clean up added attributes on live DOM
+      tagged.forEach((el) => el.removeAttribute('data-pdf-id'));
       if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
       if (hiddenContainer && hiddenContainer.parentNode) hiddenContainer.parentNode.removeChild(hiddenContainer);
     }
