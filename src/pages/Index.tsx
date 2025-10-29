@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
@@ -59,6 +60,8 @@ const Index = () => {
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState<string>("Common");
+  const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
 
   // Load template from server and merge with local data
@@ -177,6 +180,38 @@ const Index = () => {
     setData({ ...data, categories: newCategories });
   };
 
+  const addProductType = () => {
+    if (newProductType && !data.productTypes.includes(newProductType)) {
+      setData({ ...data, productTypes: [...data.productTypes, newProductType] });
+      setNewProductType("");
+      toast.success(`Product type "${newProductType}" added`);
+    }
+  };
+
+  const deleteProductType = (type: string) => {
+    if (data.productTypes.length > 1) {
+      setData({ ...data, productTypes: data.productTypes.filter(t => t !== type) });
+      if (selectedProductType === type) {
+        setSelectedProductType("Common");
+      }
+      toast.success(`Product type "${type}" deleted`);
+    } else {
+      toast.error("Cannot delete the last product type");
+    }
+  };
+
+  const getFilteredCategories = () => {
+    if (selectedProductType === "Common") {
+      return data.categories;
+    }
+    return data.categories.map(category => ({
+      ...category,
+      items: category.items.filter(item => 
+        item.productType === "Common" || item.productType === selectedProductType
+      ),
+    })).filter(category => category.items.length > 0);
+  };
+
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
@@ -247,6 +282,12 @@ const Index = () => {
         el.setAttribute('data-pdf-id', String(idCounter));
         tagged.push(el);
       });
+
+      // Also tag the product type filter section to hide it in PDF
+      const filterSection = element.querySelector('[data-pdf-filter]');
+      if (filterSection) {
+        tagged.push(filterSection as HTMLElement);
+      }
 
       // Deep clone and normalize inside the clone using the original metrics
       const snapshot = element.cloneNode(true) as HTMLElement;
@@ -367,6 +408,7 @@ const Index = () => {
         .pdf-snapshot * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .pdf-snapshot table { max-width: 100%; width: 100%; }
         .pdf-snapshot table td, .pdf-snapshot table th { font-size: 12px !important; padding: 6px !important; }
+        .pdf-snapshot [data-pdf-filter] { display: none !important; }
       `;
       document.head.appendChild(styleEl);
 
@@ -562,16 +604,79 @@ const Index = () => {
             </div>
           </div>
 
+          {/* Product Type Filter */}
+          <div className="space-y-4" data-pdf-filter>
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Product Type Filter
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <SelectTrigger className="w-full sm:w-[280px]">
+                  <SelectValue placeholder="Select product type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Common">All (Common)</SelectItem>
+                  {data.productTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {editMode && (
+                <div className="flex gap-2 flex-1">
+                  <Input
+                    value={newProductType}
+                    onChange={(e) => setNewProductType(e.target.value)}
+                    placeholder="New product type"
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        addProductType();
+                      }
+                    }}
+                  />
+                  <Button onClick={addProductType} size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {editMode && (
+              <div className="flex flex-wrap gap-2">
+                {data.productTypes.map((type) => (
+                  <div
+                    key={type}
+                    className="flex items-center gap-2 bg-secondary px-3 py-1 rounded-full text-sm"
+                  >
+                    <span>{type}</span>
+                    <button
+                      onClick={() => deleteProductType(type)}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Categories */}
           <div className="space-y-6">
-            {data.categories.map((category, index) => {
+            {getFilteredCategories().map((category, index) => {
+              const originalIndex = data.categories.findIndex(c => c.id === category.id);
               return (
                 <CategorySection
                   key={category.id}
                   category={category}
-                  onUpdate={(updated) => updateCategory(index, updated)}
-                  onDelete={() => deleteCategory(index)}
+                  onUpdate={(updated) => updateCategory(originalIndex, updated)}
+                  onDelete={() => deleteCategory(originalIndex)}
                   editMode={editMode}
+                  productTypes={data.productTypes}
+                  selectedFilter={selectedProductType}
                 />
               );
             })}
