@@ -306,7 +306,13 @@ const Index = () => {
         const box = document.createElement('div');
         box.style.boxSizing = 'border-box';
         box.style.height = `${Math.ceil(rect.height)}px`;
-        box.style.width = `${Math.ceil(rect.width)}px`;
+        
+        // Limit width to prevent overflow in PDF
+        const maxWidth = 500; // Maximum width for input boxes in PDF
+        const boxWidth = Math.min(Math.ceil(rect.width), maxWidth);
+        box.style.width = `${boxWidth}px`;
+        box.style.maxWidth = `${maxWidth}px`;
+        
         box.style.borderStyle = 'solid';
         box.style.borderWidth = `${bt}px ${br}px ${bb}px ${bl}px`;
         box.style.borderColor = cs.borderColor || 'hsl(var(--input))';
@@ -376,6 +382,8 @@ const Index = () => {
       styleEl.textContent = `
         .pdf-snapshot .avoid-break { break-inside: avoid; page-break-inside: avoid; }
         .pdf-snapshot * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .pdf-snapshot table { max-width: 100%; width: 100%; }
+        .pdf-snapshot table td, .pdf-snapshot table th { font-size: 12px !important; padding: 6px !important; }
       `;
       document.head.appendChild(styleEl);
 
