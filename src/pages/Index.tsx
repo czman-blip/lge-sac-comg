@@ -318,8 +318,8 @@ const Index = () => {
         box.style.boxSizing = 'border-box';
         box.style.height = `${Math.ceil(rect.height)}px`;
         
-        // Limit width to prevent overflow in PDF
-        const maxWidth = 500; // Maximum width for input boxes in PDF
+        // Optimize width for PDF layout
+        const maxWidth = 600; // Optimized maximum width for input boxes in PDF
         const boxWidth = Math.min(Math.ceil(rect.width), maxWidth);
         box.style.width = `${boxWidth}px`;
         box.style.maxWidth = `${maxWidth}px`;
@@ -410,6 +410,18 @@ const Index = () => {
         .pdf-snapshot table td, .pdf-snapshot table th { font-size: 12px !important; padding: 6px !important; }
         .pdf-snapshot [data-pdf-filter] { display: none !important; }
         .pdf-snapshot [data-pdf-hide] { display: none !important; }
+        .pdf-snapshot .grid.md\\:grid-cols-2 { 
+          display: grid !important; 
+          grid-template-columns: repeat(3, 1fr) !important; 
+          gap: 0.75rem !important; 
+        }
+        .pdf-snapshot .grid.md\\:grid-cols-2 > div {
+          font-size: 11px !important;
+        }
+        .pdf-snapshot .grid.md\\:grid-cols-2 label {
+          font-size: 10px !important;
+          margin-bottom: 0.25rem !important;
+        }
       `;
       document.head.appendChild(styleEl);
 
