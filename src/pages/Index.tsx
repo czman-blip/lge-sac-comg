@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTemplate } from "@/hooks/useTemplate";
 import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
 const STORAGE_KEY = "lge-sac-commissioning-report";
@@ -59,6 +60,8 @@ const Index = () => {
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState<string>("all");
+  const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
 
   // Load template from server and merge with local data
@@ -177,6 +180,33 @@ const Index = () => {
     setData({ ...data, categories: newCategories });
   };
 
+  const addProductType = () => {
+    if (newProductType.trim() && !data.productTypes.includes(newProductType.trim())) {
+      setData({ ...data, productTypes: [...data.productTypes, newProductType.trim()] });
+      setNewProductType("");
+      toast.success("Product type added");
+    }
+  };
+
+  const deleteProductType = (type: string) => {
+    const newProductTypes = data.productTypes.filter(t => t !== type);
+    setData({ ...data, productTypes: newProductTypes });
+    toast.success("Product type deleted");
+  };
+
+  const getFilteredCategories = () => {
+    if (selectedProductType === "all") {
+      return data.categories;
+    }
+    
+    return data.categories.map(category => ({
+      ...category,
+      items: category.items.filter(item => 
+        item.productType === "Common" || item.productType === selectedProductType
+      )
+    })).filter(category => category.items.length > 0);
+  };
+
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
@@ -242,7 +272,7 @@ const Index = () => {
 
       // Tag originals with stable ids so we can map clone -> original
       let idCounter = 0;
-      element.querySelectorAll<HTMLElement>('input, textarea, button[aria-haspopup="listbox"], canvas').forEach((el) => {
+      element.querySelectorAll<HTMLElement>('input, textarea, button[aria-haspopup="listbox"]').forEach((el) => {
         idCounter += 1;
         el.setAttribute('data-pdf-id', String(idCounter));
         tagged.push(el);
@@ -307,24 +337,11 @@ const Index = () => {
         const isTextarea = origEl.tagName === 'TEXTAREA';
         const isInput = origEl.tagName === 'INPUT';
         const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
-        const isCanvas = origEl.tagName === 'CANVAS';
 
         // Hide ALL comboboxes in PDF
         if (isSelectTrigger) {
           box.style.display = 'none';
           cloneEl.replaceWith(box);
-          return;
-        }
-
-        // Convert canvas (signatures) to images for PDF
-        if (isCanvas) {
-          const canvas = origEl as HTMLCanvasElement;
-          const img = document.createElement('img');
-          img.src = canvas.toDataURL();
-          img.style.width = '100%';
-          img.style.height = '100%';
-          img.style.display = 'block';
-          cloneEl.replaceWith(img);
           return;
         }
 
@@ -460,6 +477,57 @@ const Index = () => {
                   )}
                 </div>
               </div>
+              
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <label className="text-sm font-semibold whitespace-nowrap">Product Type Filter:</label>
+                  <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-full sm:w-[200px] h-10" data-product-filter="true">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Products</SelectItem>
+                      {data.productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {editMode && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Manage Product Types:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {data.productTypes.map(type => (
+                        <div key={type} className="flex items-center gap-1 bg-muted px-3 py-1 rounded-md">
+                          <span className="text-sm">{type}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0"
+                            onClick={() => deleteProductType(type)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newProductType}
+                        onChange={(e) => setNewProductType(e.target.value)}
+                        placeholder="Add new product type"
+                        className="h-10"
+                        onKeyPress={(e) => e.key === 'Enter' && addProductType()}
+                      />
+                      <Button onClick={addProductType} variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -564,14 +632,17 @@ const Index = () => {
 
           {/* Categories */}
           <div className="space-y-6">
-            {data.categories.map((category, index) => {
+            {getFilteredCategories().map((category, index) => {
+              const originalIndex = data.categories.findIndex(c => c.id === category.id);
               return (
                 <CategorySection
                   key={category.id}
                   category={category}
-                  onUpdate={(updated) => updateCategory(index, updated)}
-                  onDelete={() => deleteCategory(index)}
+                  onUpdate={(updated) => updateCategory(originalIndex, updated)}
+                  onDelete={() => deleteCategory(originalIndex)}
                   editMode={editMode}
+                  productTypes={data.productTypes}
+                  selectedFilter={selectedProductType}
                 />
               );
             })}

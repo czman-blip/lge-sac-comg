@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2, Image as ImageIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
@@ -12,16 +13,33 @@ interface ChecklistSectionProps {
   onUpdate: (item: ChecklistItem) => void;
   onDelete: () => void;
   editMode: boolean;
+  productTypes: string[];
 }
 
-export const ChecklistSection = ({ item, onUpdate, onDelete, editMode }: ChecklistSectionProps) => {
+export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTypes }: ChecklistSectionProps) => {
   const [showReferenceDialog, setShowReferenceDialog] = useState(false);
   
   return (
     <div className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3">
       <div className="flex flex-col gap-3">
-        {/* Checklist Item */}
+        {/* 1. Product Type and Checklist Item in one line */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+          <Select 
+            value={item.productType || "Common"} 
+            onValueChange={(value) => onUpdate({ ...item, productType: value })}
+            disabled={!editMode}
+          >
+            <SelectTrigger className="w-full sm:w-[140px] h-10">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Common">Common</SelectItem>
+              {productTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
           {editMode ? (
             <Input
               value={item.text}
