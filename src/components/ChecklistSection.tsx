@@ -23,7 +23,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
     <div className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3">
       <div className="flex flex-col gap-3">
         {/* Product Type Selection */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-pdf-hide>
           <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Product:</label>
           <Select
             value={item.productType}
@@ -86,6 +86,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1 text-xs sm:text-sm"
+                data-pdf-hide
               >
                 <ImageIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">Reference</span>

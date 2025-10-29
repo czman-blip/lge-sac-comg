@@ -409,6 +409,7 @@ const Index = () => {
         .pdf-snapshot table { max-width: 100%; width: 100%; }
         .pdf-snapshot table td, .pdf-snapshot table th { font-size: 12px !important; padding: 6px !important; }
         .pdf-snapshot [data-pdf-filter] { display: none !important; }
+        .pdf-snapshot [data-pdf-hide] { display: none !important; }
       `;
       document.head.appendChild(styleEl);
 
@@ -487,6 +488,7 @@ const Index = () => {
                     variant={editMode ? "default" : "outline"}
                     onClick={handleEditModeToggle}
                     className="flex-1 sm:flex-none"
+                    data-pdf-hide
                   >
                     {editMode ? "Edit mode" : "User mode"}
                   </Button>
