@@ -22,15 +22,14 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
   return (
     <div className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3">
       <div className="flex flex-col gap-3">
-        {/* Product Type Selection */}
-        <div className="flex items-center gap-2" data-pdf-hide>
-          <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Product:</label>
+        {/* Product Type Selection and Checklist Item in one row */}
+        <div className="flex items-center gap-2">
           <Select
             value={item.productType}
             onValueChange={(value) => onUpdate({ ...item, productType: value })}
             disabled={!editMode}
           >
-            <SelectTrigger className="h-8 text-xs w-[140px]">
+            <SelectTrigger className="h-12 text-xs w-[140px]" data-pdf-hide>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -42,10 +41,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Checklist Item */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+          
           {editMode ? (
             <Input
               value={item.text}
