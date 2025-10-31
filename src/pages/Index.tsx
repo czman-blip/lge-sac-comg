@@ -569,55 +569,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Product List */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-              Product List
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Product</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Model Name</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.products.map((product, index) => (
-                    <tr key={index}>
-                      <td className="border border-border p-3 font-medium text-sm align-middle">{product.name}</td>
-                      <td className="border border-border p-3 align-middle">
-                        <Input
-                          value={product.modelName}
-                          onChange={(e) => {
-                            const newProducts = [...data.products];
-                            newProducts[index].modelName = e.target.value;
-                            setData({ ...data, products: newProducts });
-                          }}
-                          placeholder="Enter model"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
-                        />
-                      </td>
-                      <td className="border border-border p-3 align-middle">
-                        <Input
-                          value={product.quantity}
-                          onChange={(e) => {
-                            const newProducts = [...data.products];
-                            newProducts[index].quantity = e.target.value;
-                            setData({ ...data, products: newProducts });
-                          }}
-                          placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           {/* Product Type Filter */}
           <div className="space-y-4" data-pdf-filter>
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
@@ -676,6 +627,55 @@ const Index = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Product List */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Product List
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-muted">
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Product</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Model Name</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.products.map((product, index) => (
+                    <tr key={index}>
+                      <td className="border border-border p-3 font-medium text-sm align-middle">{product.name}</td>
+                      <td className="border border-border p-3 align-middle">
+                        <Input
+                          value={product.modelName}
+                          onChange={(e) => {
+                            const newProducts = [...data.products];
+                            newProducts[index].modelName = e.target.value;
+                            setData({ ...data, products: newProducts });
+                          }}
+                          placeholder="Enter model"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
+                        />
+                      </td>
+                      <td className="border border-border p-3 align-middle">
+                        <Input
+                          value={product.quantity}
+                          onChange={(e) => {
+                            const newProducts = [...data.products];
+                            newProducts[index].quantity = e.target.value;
+                            setData({ ...data, products: newProducts });
+                          }}
+                          placeholder="Enter quantity"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Categories */}

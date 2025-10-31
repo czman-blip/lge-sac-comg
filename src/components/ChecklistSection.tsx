@@ -20,7 +20,18 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
   const [showReferenceDialog, setShowReferenceDialog] = useState(false);
   
   return (
-    <div className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3">
+    <div 
+      className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3 transition-opacity"
+      draggable={editMode}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.id);
+        e.currentTarget.style.opacity = '0.5';
+      }}
+      onDragEnd={(e) => {
+        e.currentTarget.style.opacity = '1';
+      }}
+    >
       <div className="flex flex-col gap-3">
         {/* Product Type Selection and Checklist Item in one row */}
         <div className="flex items-center gap-2">
@@ -29,7 +40,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             onValueChange={(value) => onUpdate({ ...item, productType: value })}
             disabled={!editMode}
           >
-            <SelectTrigger className="h-12 text-xs w-[140px]" data-pdf-hide>
+            <SelectTrigger className="h-8 text-xs w-[120px] py-1" data-pdf-hide>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

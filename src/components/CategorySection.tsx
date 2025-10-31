@@ -38,6 +38,16 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
     onUpdate({ ...category, items: newItems });
   };
 
+  const moveItem = (draggedId: string, targetIndex: number) => {
+    const draggedIndex = category.items.findIndex(item => item.id === draggedId);
+    if (draggedIndex === -1 || draggedIndex === targetIndex) return;
+
+    const newItems = [...category.items];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, draggedItem);
+    onUpdate({ ...category, items: newItems });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 border-b-2 border-primary pb-2">
@@ -66,14 +76,30 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
 
       <div className="space-y-3 pl-4">
         {category.items.map((item, index) => (
-          <ChecklistSection
+          <div
             key={item.id}
-            item={item}
-            onUpdate={(updatedItem) => updateItem(index, updatedItem)}
-            onDelete={() => deleteItem(index)}
-            editMode={editMode}
-            productTypes={productTypes}
-          />
+            onDragOver={(e) => {
+              if (editMode) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              }
+            }}
+            onDrop={(e) => {
+              if (editMode) {
+                e.preventDefault();
+                const draggedId = e.dataTransfer.getData('text/plain');
+                moveItem(draggedId, index);
+              }
+            }}
+          >
+            <ChecklistSection
+              item={item}
+              onUpdate={(updatedItem) => updateItem(index, updatedItem)}
+              onDelete={() => deleteItem(index)}
+              editMode={editMode}
+              productTypes={productTypes}
+            />
+          </div>
         ))}
 
         {editMode && (
