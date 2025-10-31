@@ -680,8 +680,8 @@ const Index = () => {
 
           {/* Categories */}
           <div className="space-y-6">
-            {getFilteredCategories().map((category, index) => {
-              const originalIndex = data.categories.findIndex(c => c.id === category.id);
+            {(editMode ? data.categories : getFilteredCategories()).map((category, index) => {
+              const originalIndex = editMode ? index : data.categories.findIndex(c => c.id === category.id);
               return (
                 <CategorySection
                   key={category.id}
