@@ -12,11 +12,22 @@ export const SignatureCanvas = ({ signature, onSave, disabled }: SignatureCanvas
   const sigCanvas = useRef<SignatureCanvasLib>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const lastSavedSignature = useRef<string>("");
 
   useEffect(() => {
-    if (signature && sigCanvas.current) {
+    // Only load signature if it's different from what we last saved
+    // This prevents re-drawing the same signature on top of itself
+    if (signature && sigCanvas.current && signature !== lastSavedSignature.current) {
       try {
+        // Check if canvas is not empty and signature is the same as current
+        if (!sigCanvas.current.isEmpty()) {
+          const currentData = sigCanvas.current.toDataURL();
+          if (currentData === signature) {
+            return; // Already displaying this signature, no need to reload
+          }
+        }
         sigCanvas.current.fromDataURL(signature);
+        lastSavedSignature.current = signature;
       } catch (error) {
         console.error("Failed to load signature:", error);
       }
@@ -43,12 +54,14 @@ export const SignatureCanvas = ({ signature, onSave, disabled }: SignatureCanvas
 
   const handleClear = () => {
     sigCanvas.current?.clear();
+    lastSavedSignature.current = "";
     onSave("");
   };
 
   const handleSave = () => {
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
       const dataUrl = sigCanvas.current.toDataURL();
+      lastSavedSignature.current = dataUrl;
       onSave(dataUrl);
     }
   };
