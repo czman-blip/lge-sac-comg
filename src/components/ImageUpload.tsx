@@ -96,7 +96,7 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
               fileInputRef.current?.click();
             }}
             type="button"
-            className="touch-manipulation active:scale-95 transition-transform"
+            className="h-8 gap-1 text-xs sm:text-sm touch-manipulation active:scale-95 transition-transform"
           >
             <Camera className="w-4 h-4 mr-2" />
             Add Image
