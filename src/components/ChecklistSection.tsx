@@ -136,6 +136,14 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             </DialogContent>
           </Dialog>
           
+          <div className="flex-shrink-0">
+            <ImageUpload
+              images={item.images}
+              onImagesChange={(images) => onUpdate({ ...item, images })}
+              disabled={false}
+            />
+          </div>
+          
           {editMode && (
             <Button
               variant="ghost"
@@ -157,15 +165,6 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
           className="flex-1 h-12 pt-3 pb-3.5 leading-[1.35]"
-        />
-      </div>
-
-      {/* 5. Add Image */}
-      <div>
-        <ImageUpload
-          images={item.images}
-          onImagesChange={(images) => onUpdate({ ...item, images })}
-          disabled={false}
         />
       </div>
     </div>
