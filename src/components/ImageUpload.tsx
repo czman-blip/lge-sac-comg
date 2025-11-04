@@ -98,8 +98,9 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
             type="button"
             className="h-8 gap-1 text-xs sm:text-sm touch-manipulation active:scale-95 transition-transform"
           >
-            <Camera className="w-4 h-4 mr-2" />
-            Add Image
+            <Camera className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Image</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </>
       )}
