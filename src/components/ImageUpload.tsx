@@ -71,7 +71,7 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
   };
 
   return (
-    <div className="space-y-2">
+    <div className="inline-flex flex-col gap-2">
       {!disabled && (
         <>
           <input

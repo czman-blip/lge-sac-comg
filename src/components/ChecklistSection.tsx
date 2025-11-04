@@ -136,13 +136,11 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             </DialogContent>
           </Dialog>
           
-          <div className="flex-shrink-0">
-            <ImageUpload
-              images={item.images}
-              onImagesChange={(images) => onUpdate({ ...item, images })}
-              disabled={false}
-            />
-          </div>
+          <ImageUpload
+            images={item.images}
+            onImagesChange={(images) => onUpdate({ ...item, images })}
+            disabled={false}
+          />
           
           {editMode && (
             <Button
