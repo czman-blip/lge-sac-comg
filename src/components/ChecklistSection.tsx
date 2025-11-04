@@ -66,8 +66,8 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
         </div>
         
         {/* 3. OK, NG, Reference buttons */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-          <label className="flex items-center gap-2 cursor-pointer min-w-[70px]">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <label className="flex items-center gap-1.5 cursor-pointer">
             <span className="text-sm font-medium">OK</span>
             <Checkbox
               checked={item.ok}
@@ -77,7 +77,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             />
           </label>
           
-          <label className="flex items-center gap-2 cursor-pointer min-w-[70px]">
+          <label className="flex items-center gap-1.5 cursor-pointer">
             <span className="text-sm font-medium">NG</span>
             <Checkbox
               checked={item.ng}
