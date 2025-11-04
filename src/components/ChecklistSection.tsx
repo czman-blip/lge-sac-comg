@@ -40,7 +40,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             onValueChange={(value) => onUpdate({ ...item, productType: value })}
             disabled={!editMode}
           >
-            <SelectTrigger className="h-8 text-xs w-[120px] py-1" data-pdf-hide>
+            <SelectTrigger className="h-8 text-xs w-[80px] sm:w-[120px] py-1" data-pdf-hide>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
