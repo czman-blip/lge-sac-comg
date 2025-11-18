@@ -68,22 +68,24 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
         {/* 3. OK, NG, Reference buttons */}
         <div className="flex flex-wrap items-center gap-1.5">
           <label className="flex items-center gap-1.5 cursor-pointer">
-            <span className="text-sm font-medium">OK</span>
+            <span className="text-sm font-medium leading-4">OK</span>
             <Checkbox
               checked={item.ok}
               onCheckedChange={(checked) =>
                 onUpdate({ ...item, ok: checked as boolean, ng: false })
               }
+              className="align-middle"
             />
           </label>
           
           <label className="flex items-center gap-1.5 cursor-pointer">
-            <span className="text-sm font-medium">NG</span>
+            <span className="text-sm font-medium leading-4">NG</span>
             <Checkbox
               checked={item.ng}
               onCheckedChange={(checked) =>
                 onUpdate({ ...item, ng: checked as boolean, ok: false })
               }
+              className="align-middle"
             />
           </label>
           
