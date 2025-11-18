@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X, FileImage } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -475,6 +476,202 @@ const Index = () => {
     }
   };
 
+  const generateJPG = async () => {
+    const loadingToast = toast.loading("Generating JPG...");
+    let hiddenContainer: HTMLDivElement | null = null;
+    let styleEl: HTMLStyleElement | null = null;
+    const tagged: HTMLElement[] = [];
+
+    try {
+      const element = document.getElementById("pdf-content");
+      if (!element) {
+        toast.dismiss(loadingToast);
+        return;
+      }
+
+      // Ensure fonts are fully loaded
+      const anyDoc = document as any;
+      if (anyDoc.fonts && anyDoc.fonts.ready) {
+        try { await anyDoc.fonts.ready; } catch {}
+      }
+
+      // Tag elements to hide in JPG
+      let idCounter = 0;
+      element.querySelectorAll<HTMLElement>('input, textarea, button[aria-haspopup="listbox"], canvas').forEach((el) => {
+        idCounter += 1;
+        el.setAttribute('data-jpg-id', String(idCounter));
+        tagged.push(el);
+      });
+
+      // Tag filter section and hide elements
+      const filterSection = element.querySelector('[data-pdf-filter]');
+      if (filterSection) {
+        tagged.push(filterSection as HTMLElement);
+      }
+
+      // Clone and prepare for JPG export
+      const snapshot = element.cloneNode(true) as HTMLElement;
+      snapshot.classList.add("jpg-snapshot");
+
+      const getOriginal = (id: string) => element.querySelector<HTMLElement>(`[data-jpg-id="${id}"]`)!;
+
+      snapshot.querySelectorAll<HTMLElement>('[data-jpg-id]').forEach((cloneEl) => {
+        const id = cloneEl.getAttribute('data-jpg-id')!;
+        const origEl = getOriginal(id);
+        const cs = getComputedStyle(origEl);
+        const rect = origEl.getBoundingClientRect();
+
+        const fontSize = parseFloat(cs.fontSize || '16');
+        const lineHeight = cs.lineHeight === 'normal' ? fontSize * 1.2 : parseFloat(cs.lineHeight);
+        const fontFamily = cs.fontFamily || 'sans-serif';
+        const fontWeight = cs.fontWeight || '400';
+        const color = cs.color || '#000000';
+
+        const tagName = origEl.tagName.toLowerCase();
+        let replacement: HTMLElement;
+
+        if (tagName === 'input' || tagName === 'textarea') {
+          const valueText = (origEl as HTMLInputElement | HTMLTextAreaElement).value || '';
+          replacement = document.createElement('div');
+          replacement.textContent = valueText;
+          replacement.style.cssText = `
+            box-sizing: border-box;
+            width: ${rect.width}px;
+            height: ${rect.height}px;
+            font-size: ${fontSize}px;
+            line-height: ${lineHeight}px;
+            font-family: ${fontFamily};
+            font-weight: ${fontWeight};
+            color: ${color};
+            padding: ${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft};
+            border: ${cs.border};
+            border-radius: ${cs.borderRadius};
+            background: ${cs.background};
+            text-align: ${cs.textAlign};
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: break-word;
+          `;
+        } else if (tagName === 'button' && origEl.hasAttribute('aria-haspopup')) {
+          const selectValue = origEl.textContent || '';
+          replacement = document.createElement('div');
+          replacement.textContent = selectValue;
+          replacement.style.cssText = `
+            box-sizing: border-box;
+            width: ${rect.width}px;
+            height: ${rect.height}px;
+            font-size: ${fontSize}px;
+            line-height: ${lineHeight}px;
+            font-family: ${fontFamily};
+            font-weight: ${fontWeight};
+            color: ${color};
+            padding: ${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft};
+            border: ${cs.border};
+            border-radius: ${cs.borderRadius};
+            background: ${cs.background};
+            text-align: ${cs.textAlign};
+            display: flex;
+            align-items: center;
+          `;
+        } else if (tagName === 'canvas') {
+          replacement = origEl.cloneNode(true) as HTMLCanvasElement;
+          const origCanvas = origEl as HTMLCanvasElement;
+          const replCanvas = replacement as HTMLCanvasElement;
+          const ctx = replCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(origCanvas, 0, 0);
+          }
+        } else {
+          replacement = cloneEl;
+        }
+
+        if (replacement !== cloneEl && cloneEl.parentNode) {
+          cloneEl.parentNode.replaceChild(replacement, cloneEl);
+        }
+      });
+
+      // Create hidden container
+      hiddenContainer = document.createElement("div");
+      hiddenContainer.style.cssText = `
+        position: fixed;
+        top: -99999px;
+        left: -99999px;
+        width: ${element.scrollWidth}px;
+        z-index: -1;
+        pointer-events: none;
+      `;
+      hiddenContainer.style.background = "#ffffff";
+      hiddenContainer.appendChild(snapshot);
+      document.body.appendChild(hiddenContainer);
+
+      // Add styles for JPG export
+      styleEl = document.createElement("style");
+      styleEl.textContent = `
+        .jpg-snapshot .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+        .jpg-snapshot * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .jpg-snapshot table { max-width: 100%; width: 100%; }
+        .jpg-snapshot table td, .jpg-snapshot table th { font-size: 12px !important; padding: 6px !important; }
+        .jpg-snapshot [data-pdf-filter] { display: none !important; }
+        .jpg-snapshot [data-pdf-hide] { display: none !important; }
+        .jpg-snapshot .grid.md\\:grid-cols-2 { 
+          display: grid !important; 
+          grid-template-columns: repeat(3, 1fr) !important; 
+          gap: 0.75rem !important; 
+        }
+        .jpg-snapshot .grid.md\\:grid-cols-2 > div {
+          font-size: 11px !important;
+        }
+        .jpg-snapshot .grid.md\\:grid-cols-2 label {
+          font-size: 10px !important;
+          margin-bottom: 0.25rem !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+
+      const fileName = data.projectName 
+        ? `${data.projectName}_Commissioning_Report.jpg`
+        : "LGE_SAC_Commissioning_Report.jpg";
+
+      const scale = Math.max(2, Math.min(3, (window.devicePixelRatio || 2)));
+      
+      // Capture as canvas
+      const canvas = await html2canvas(snapshot, {
+        scale,
+        useCORS: true,
+        logging: false,
+        scrollY: 0,
+        letterRendering: true,
+        windowWidth: Math.max(document.documentElement.scrollWidth, element.scrollWidth),
+        backgroundColor: '#ffffff',
+      });
+
+      // Convert to JPG and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          toast.dismiss(loadingToast);
+          toast.success("JPG generated successfully!");
+        }
+      }, 'image/jpeg', 0.95);
+
+    } catch (error) {
+      console.error("JPG generation failed:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Failed to generate JPG");
+    } finally {
+      // Clean up
+      tagged.forEach((el) => el.removeAttribute('data-jpg-id'));
+      if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+      if (hiddenContainer && hiddenContainer.parentNode) hiddenContainer.parentNode.removeChild(hiddenContainer);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-secondary py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -767,8 +964,8 @@ const Index = () => {
         </div>
         </div>
 
-        {/* PDF Button */}
-        <div className="mt-6 flex justify-center">
+        {/* Export Buttons */}
+        <div className="mt-6 flex justify-center gap-3">
           <Button
             onClick={generatePDF}
             size="lg"
@@ -776,6 +973,15 @@ const Index = () => {
           >
             <FileDown className="w-5 h-5" />
             Generate PDF
+          </Button>
+          <Button
+            onClick={generateJPG}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <FileImage className="w-5 h-5" />
+            Generate JPG
           </Button>
         </div>
       </div>
