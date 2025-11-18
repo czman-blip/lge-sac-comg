@@ -475,77 +475,6 @@ const Index = () => {
     }
   };
 
-  const generateJPG = async () => {
-    const loadingToast = toast.loading("Generating JPG...");
-    
-    try {
-      // Dynamic import to avoid circular dependency
-      const html2canvas = (await import('html2canvas')).default;
-      
-      const element = document.getElementById("pdf-content");
-      if (!element) {
-        toast.dismiss(loadingToast);
-        return;
-      }
-
-      // Wait for fonts to load
-      const anyDoc = document as any;
-      if (anyDoc.fonts && anyDoc.fonts.ready) {
-        try { await anyDoc.fonts.ready; } catch {}
-      }
-
-      // Temporarily hide elements with data-pdf-hide attribute
-      const hideElements = element.querySelectorAll('[data-pdf-hide]');
-      hideElements.forEach((el) => {
-        (el as HTMLElement).style.display = 'none';
-      });
-
-      // Use html2canvas to capture the entire content as one long image
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 1200,
-      });
-
-      // Restore hidden elements
-      hideElements.forEach((el) => {
-        (el as HTMLElement).style.display = '';
-      });
-
-      // Convert canvas to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          const fileName = `${data.projectName || 'report'}_${format(new Date(), 'yyyy-MM-dd')}.jpg`;
-          link.href = url;
-          link.download = fileName;
-          link.click();
-          URL.revokeObjectURL(url);
-          
-          toast.dismiss(loadingToast);
-          toast.success("JPG generated successfully!");
-        }
-      }, 'image/jpeg', 0.95);
-
-    } catch (error) {
-      console.error("JPG generation failed:", error);
-      toast.dismiss(loadingToast);
-      toast.error("Failed to generate JPG");
-      
-      // Restore any hidden elements on error
-      const element = document.getElementById("pdf-content");
-      if (element) {
-        const hideElements = element.querySelectorAll('[data-pdf-hide]');
-        hideElements.forEach((el) => {
-          (el as HTMLElement).style.display = '';
-        });
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-secondary py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -838,8 +767,8 @@ const Index = () => {
         </div>
         </div>
 
-        {/* Export Buttons */}
-        <div className="mt-6 flex justify-center gap-4">
+        {/* PDF Button */}
+        <div className="mt-6 flex justify-center">
           <Button
             onClick={generatePDF}
             size="lg"
@@ -847,15 +776,6 @@ const Index = () => {
           >
             <FileDown className="w-5 h-5" />
             Generate PDF
-          </Button>
-          <Button
-            onClick={generateJPG}
-            size="lg"
-            className="gap-2"
-            variant="outline"
-          >
-            <FileDown className="w-5 h-5" />
-            Generate JPG
           </Button>
         </div>
       </div>
