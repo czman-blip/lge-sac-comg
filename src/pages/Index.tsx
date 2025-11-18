@@ -533,7 +533,7 @@ const Index = () => {
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
@@ -542,7 +542,7 @@ const Index = () => {
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
@@ -552,7 +552,7 @@ const Index = () => {
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35]"
+                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                   />
                   <Button
                     variant="outline"
@@ -635,19 +635,19 @@ const Index = () => {
               Product List
             </h2>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse print:table-fixed">
                 <thead>
                   <tr className="bg-muted">
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Product</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Model Name</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle">Quantity</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[120px]">Product</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[280px]">Model Name</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[100px]">Quantity</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.products.map((product, index) => (
                     <tr key={index}>
-                      <td className="border border-border p-3 font-medium text-sm align-middle">{product.name}</td>
-                      <td className="border border-border p-3 align-middle">
+                      <td className="border border-border p-3 font-medium text-sm align-middle print:break-words">{product.name}</td>
+                      <td className="border border-border p-3 align-middle print:break-words">
                         <Input
                           value={product.modelName}
                           onChange={(e) => {
@@ -659,7 +659,7 @@ const Index = () => {
                           className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
-                      <td className="border border-border p-3 align-middle">
+                      <td className="border border-border p-3 align-middle print:break-words">
                         <Input
                           value={product.quantity}
                           onChange={(e) => {
