@@ -528,7 +528,7 @@ const Index = () => {
             </h2>
             <div className="grid gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold">Project name:</label>
+                <label className="text-sm font-semibold print:flex print:items-center">Project name:</label>
                 <Input
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
@@ -537,7 +537,7 @@ const Index = () => {
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold">Opportunity number:</label>
+                <label className="text-sm font-semibold print:flex print:items-center">Opportunity number:</label>
                 <Input
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
@@ -546,7 +546,7 @@ const Index = () => {
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                <label className="text-sm font-semibold pt-2">Address:</label>
+                <label className="text-sm font-semibold pt-2 print:pt-0 print:flex print:items-center">Address:</label>
                 <div className="space-y-2">
                   <Input
                     value={data.address}
@@ -709,7 +709,7 @@ const Index = () => {
 
           {/* Inspection Date */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Inspection Date:</label>
+            <label className="text-sm font-semibold print:flex print:items-center">Inspection Date:</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -738,7 +738,7 @@ const Index = () => {
           {/* Signatures */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Commissioner Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Commissioner Signature:</label>
               <SignatureCanvas
                 signature={data.commissionerSignature}
                 onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
@@ -747,7 +747,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Installer Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Installer Signature:</label>
               <SignatureCanvas
                 signature={data.installerSignature}
                 onSave={(signature) => setData({ ...data, installerSignature: signature })}
@@ -756,7 +756,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Customer Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Customer Signature:</label>
               <SignatureCanvas
                 signature={data.customerSignature}
                 onSave={(signature) => setData({ ...data, customerSignature: signature })}
