@@ -528,31 +528,31 @@ const Index = () => {
             </h2>
             <div className="grid gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:flex print:items-center">Project name:</label>
+                <label className="text-sm font-semibold print:items-start">Project name:</label>
                 <Input
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words print:flex print:items-center print:py-0"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:flex print:items-center">Opportunity number:</label>
+                <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
                 <Input
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words print:flex print:items-center print:py-0"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                <label className="text-sm font-semibold pt-2 print:pt-0 print:flex print:items-center">Address:</label>
+                <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
                 <div className="space-y-2">
                   <Input
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words print:flex print:items-center print:py-0"
+                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
                   />
                   <Button
                     variant="outline"
@@ -656,7 +656,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter model"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2] print:flex print:items-center print:py-0"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
                       <td className="border border-border p-3 align-middle print:break-words">
@@ -668,7 +668,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2] print:flex print:items-center print:py-0"
+                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
                     </tr>
@@ -709,7 +709,7 @@ const Index = () => {
 
           {/* Inspection Date */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold print:flex print:items-center">Inspection Date:</label>
+            <label className="text-sm font-semibold">Inspection Date:</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -738,7 +738,7 @@ const Index = () => {
           {/* Signatures */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold print:flex print:items-center">Commissioner Signature:</label>
+              <label className="text-sm font-semibold">Commissioner Signature:</label>
               <SignatureCanvas
                 signature={data.commissionerSignature}
                 onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
@@ -747,7 +747,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold print:flex print:items-center">Installer Signature:</label>
+              <label className="text-sm font-semibold">Installer Signature:</label>
               <SignatureCanvas
                 signature={data.installerSignature}
                 onSave={(signature) => setData({ ...data, installerSignature: signature })}
@@ -756,7 +756,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold print:flex print:items-center">Customer Signature:</label>
+              <label className="text-sm font-semibold">Customer Signature:</label>
               <SignatureCanvas
                 signature={data.customerSignature}
                 onSave={(signature) => setData({ ...data, customerSignature: signature })}
