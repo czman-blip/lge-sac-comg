@@ -528,7 +528,7 @@ const Index = () => {
             </h2>
             <div className="grid gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:items-start">Project name:</label>
+                <label className="text-sm font-semibold print:flex print:items-center">Project name:</label>
                 <Input
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
@@ -537,7 +537,7 @@ const Index = () => {
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
+                <label className="text-sm font-semibold print:flex print:items-center">Opportunity number:</label>
                 <Input
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
@@ -546,7 +546,7 @@ const Index = () => {
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
+                <label className="text-sm font-semibold pt-2 print:pt-0 print:flex print:items-center">Address:</label>
                 <div className="space-y-2">
                   <Input
                     value={data.address}
@@ -638,16 +638,16 @@ const Index = () => {
               <table className="w-full border-collapse print:table-fixed">
                 <thead>
                   <tr className="bg-muted">
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[120px]">Product</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[280px]">Model Name</th>
-                    <th className="border border-border p-3 text-left font-semibold text-sm align-middle print:w-[100px]">Quantity</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm print:w-[120px] print:align-middle">Product</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm print:w-[280px] print:align-middle">Model Name</th>
+                    <th className="border border-border p-3 text-left font-semibold text-sm print:w-[100px] print:align-middle">Quantity</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.products.map((product, index) => (
                     <tr key={index}>
-                      <td className="border border-border p-3 font-medium text-sm align-middle print:break-words">{product.name}</td>
-                      <td className="border border-border p-3 align-middle print:break-words">
+                      <td className="border border-border p-3 font-medium text-sm print:break-words print:align-middle">{product.name}</td>
+                      <td className="border border-border p-3 print:break-words print:align-middle">
                         <Input
                           value={product.modelName}
                           onChange={(e) => {
@@ -659,7 +659,7 @@ const Index = () => {
                           className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
                         />
                       </td>
-                      <td className="border border-border p-3 align-middle print:break-words">
+                      <td className="border border-border p-3 print:break-words print:align-middle">
                         <Input
                           value={product.quantity}
                           onChange={(e) => {
@@ -709,7 +709,7 @@ const Index = () => {
 
           {/* Inspection Date */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Inspection Date:</label>
+            <label className="text-sm font-semibold print:flex print:items-center">Inspection Date:</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -738,7 +738,7 @@ const Index = () => {
           {/* Signatures */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Commissioner Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Commissioner Signature:</label>
               <SignatureCanvas
                 signature={data.commissionerSignature}
                 onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
@@ -747,7 +747,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Installer Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Installer Signature:</label>
               <SignatureCanvas
                 signature={data.installerSignature}
                 onSave={(signature) => setData({ ...data, installerSignature: signature })}
@@ -756,7 +756,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Customer Signature:</label>
+              <label className="text-sm font-semibold print:flex print:items-center">Customer Signature:</label>
               <SignatureCanvas
                 signature={data.customerSignature}
                 onSave={(signature) => setData({ ...data, customerSignature: signature })}
