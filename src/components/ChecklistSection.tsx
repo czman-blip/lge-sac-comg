@@ -61,14 +61,14 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               placeholder="Checklist item"
             />
           ) : (
-            <p className="font-medium flex-1 py-2 print:flex print:items-center">{item.text}</p>
+            <p className="font-medium flex-1 py-2 print:flex print:items-start">{item.text}</p>
           )}
         </div>
         
         {/* 3. OK, NG, Reference buttons */}
         <div className="flex flex-wrap items-center gap-1.5">
           <label className="flex items-center gap-1.5 cursor-pointer">
-            <span className="text-sm font-medium leading-4 print:flex print:items-center">OK</span>
+            <span className="text-sm font-medium leading-4 print:flex print:items-start">OK</span>
             <Checkbox
               checked={item.ok}
               onCheckedChange={(checked) =>
@@ -79,7 +79,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
           </label>
           
           <label className="flex items-center gap-1.5 cursor-pointer">
-            <span className="text-sm font-medium leading-4 print:flex print:items-center">NG</span>
+            <span className="text-sm font-medium leading-4 print:flex print:items-start">NG</span>
             <Checkbox
               checked={item.ng}
               onCheckedChange={(checked) =>
@@ -159,7 +159,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
 
       {/* 4. Issue field */}
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium whitespace-nowrap print:flex print:items-center">Issue:</label>
+        <label className="text-sm font-medium whitespace-nowrap print:flex print:items-start">Issue:</label>
         <Input
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
