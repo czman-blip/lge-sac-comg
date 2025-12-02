@@ -59,7 +59,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
             placeholder="Category name"
           />
         ) : (
-          <h2 className="text-lg font-semibold flex-1">{category.name}</h2>
+          <h2 className="text-lg font-semibold flex-1 print:flex print:items-center">{category.name}</h2>
         )}
         
         {editMode && (
