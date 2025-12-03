@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, MapPin, X, LogOut } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
@@ -13,8 +13,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
-import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { useTemplate } from "@/hooks/useTemplate";
+import { useAuth } from "@/hooks/useAuth";
 import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
 const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
@@ -59,10 +59,10 @@ const Index = () => {
   const [editMode, setEditMode] = useState(false);
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
+  const { user, canEdit, signOut } = useAuth();
 
   // Load template from server and merge with local data
   useEffect(() => {
@@ -151,13 +151,25 @@ const Index = () => {
 
   const handleEditModeToggle = () => {
     if (!editMode) {
-      // Entering edit mode - always ask for password
-      setShowPasswordDialog(true);
+      // Entering edit mode - check if user is authenticated with proper role
+      if (user && canEdit) {
+        setEditMode(true);
+        toast.success("Edit mode activated");
+      } else {
+        // Show password dialog to redirect to auth
+        setShowPasswordDialog(true);
+      }
     } else {
       // Exiting edit mode - save template to server
       saveTemplate(data.categories);
       setEditMode(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setEditMode(false);
+    toast.success("Signed out successfully");
   };
 
   const addCategory = () => {
@@ -504,14 +516,14 @@ const Index = () => {
                   >
                     {editMode ? "Edit mode" : "User mode"}
                   </Button>
-                  {editMode && (
+                  {user && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowChangePasswordDialog(true)}
-                      title="Change password"
+                      onClick={handleSignOut}
+                      title="Sign out"
                     >
-                      <KeyRound className="w-4 h-4" />
+                      <LogOut className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
@@ -785,10 +797,6 @@ const Index = () => {
         open={showPasswordDialog}
         onOpenChange={setShowPasswordDialog}
         onSuccess={() => setEditMode(true)}
-      />
-      <ChangePasswordDialog
-        open={showChangePasswordDialog}
-        onOpenChange={setShowChangePasswordDialog}
       />
     </div>
   );
