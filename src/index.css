@@ -242,6 +242,12 @@ All colors MUST be HSL.
     border: 1px solid hsl(0 0% 85%) !important;
   }
 
+  /* Keep title and project info together on first page */
+  .print-first-page {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   /* Page break handling - prevent content from being cut */
   .avoid-break,
   .border.border-border.rounded-lg,
