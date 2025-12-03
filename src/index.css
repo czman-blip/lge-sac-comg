@@ -204,11 +204,27 @@ All colors MUST be HSL.
     display: none !important;
   }
 
-  /* Hide edit mode controls */
-  button,
+  /* Hide edit mode controls but NOT checkboxes */
   [data-pdf-filter],
-  [data-pdf-hide] {
+  [data-pdf-hide],
+  button:not([role="checkbox"]) {
     display: none !important;
+  }
+
+  /* Ensure checkboxes are visible */
+  button[role="checkbox"] {
+    display: inline-flex !important;
+    border: 1px solid hsl(0 0% 50%) !important;
+    background: white !important;
+  }
+
+  button[role="checkbox"][data-state="checked"] {
+    background: hsl(343 80% 35%) !important;
+    border-color: hsl(343 80% 35%) !important;
+  }
+
+  button[role="checkbox"][data-state="checked"] svg {
+    color: white !important;
   }
 
   /* Show print content properly */
