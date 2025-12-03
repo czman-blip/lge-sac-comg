@@ -242,23 +242,75 @@ All colors MUST be HSL.
     border: 1px solid hsl(0 0% 85%) !important;
   }
 
-  /* Page break handling */
-  .avoid-break {
-    break-inside: avoid;
-    page-break-inside: avoid;
+  /* Page break handling - prevent content from being cut */
+  .avoid-break,
+  .border.border-border.rounded-lg,
+  .bg-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
+  /* Checklist items should not split */
+  #pdf-content > .space-y-6 > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Category sections */
+  #pdf-content .space-y-4 > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Individual checklist cards */
+  #pdf-content .space-y-3 > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 8px;
+  }
+
+  /* Signature section should stay together */
+  #pdf-content .grid.grid-cols-1.md\\:grid-cols-3 {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Each signature canvas area */
+  #pdf-content .grid.grid-cols-1.md\\:grid-cols-3 > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Table rows */
   table {
     break-inside: auto;
   }
 
   tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Add some margin for page breaks */
+  #pdf-content > .space-y-6 > div {
+    margin-bottom: 16px;
+    padding-bottom: 8px;
   }
 
   /* Hide background colors for better printing */
   .bg-secondary {
     background: white !important;
+  }
+
+  /* Orphan and widow control */
+  p, h1, h2, h3, h4, h5, h6 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Add page break before major sections if needed */
+  h2, h3 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 }
