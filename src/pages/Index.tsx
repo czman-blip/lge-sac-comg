@@ -274,52 +274,53 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* PDF Content - includes everything */}
         <div id="pdf-content" className="space-y-6">
-          {/* Header */}
-          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                {editMode ? (
-                  <Input
-                    value={data.title}
-                    onChange={(e) => setData({ ...data, title: e.target.value })}
-                    className="text-3xl font-bold text-primary h-14"
-                  />
-                ) : (
-                  <h1 className="text-3xl font-bold text-primary">
-                    {data.title}
-                  </h1>
-                )}
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    variant={editMode ? "default" : "outline"}
-                    onClick={handleEditModeToggle}
-                    className="flex-1 sm:flex-none"
-                    data-pdf-hide
-                  >
-                    {editMode ? "Edit mode" : "User mode"}
-                  </Button>
-                  {user && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSignOut}
-                      title="Sign out"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </Button>
+          {/* Header + Project Info - keep together on first page */}
+          <div className="print-first-page space-y-6">
+            {/* Header */}
+            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  {editMode ? (
+                    <Input
+                      value={data.title}
+                      onChange={(e) => setData({ ...data, title: e.target.value })}
+                      className="text-3xl font-bold text-primary h-14"
+                    />
+                  ) : (
+                    <h1 className="text-3xl font-bold text-primary">
+                      {data.title}
+                    </h1>
                   )}
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      variant={editMode ? "default" : "outline"}
+                      onClick={handleEditModeToggle}
+                      className="flex-1 sm:flex-none"
+                      data-pdf-hide
+                    >
+                      {editMode ? "Edit mode" : "User mode"}
+                    </Button>
+                    {user && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleSignOut}
+                        title="Sign out"
+                      >
+                        <LogOut className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Main Report Content */}
-          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
-          {/* Project Information */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-              Project Information
-            </h2>
+            {/* Project Information Card */}
+            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6">
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+                  Project Information
+                </h2>
             <div className="grid gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
                 <label className="text-sm font-semibold print:items-start">Project name:</label>
@@ -362,7 +363,12 @@ const Index = () => {
               </div>
             </div>
           </div>
+            </div>
+          </div>
+          {/* End of print-first-page wrapper */}
 
+          {/* Main Report Content */}
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Product Type Filter */}
           <div className="space-y-4" data-pdf-filter>
             <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
