@@ -274,7 +274,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* PDF Content - includes everything */}
         <div id="pdf-content" className="space-y-6">
-          {/* Header + Project Info - keep together on first page */}
+          {/* Header + Project Info + Product List - keep together on first page */}
           <div className="print-first-page space-y-6">
             {/* Header */}
             <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
@@ -321,119 +321,55 @@ const Index = () => {
                 <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
                   Project Information
                 </h2>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:items-start">Project name:</label>
-                <Input
-                  value={data.projectName}
-                  onChange={(e) => setData({ ...data, projectName: e.target.value })}
-                  placeholder="Enter project name"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
-                <Input
-                  value={data.opportunityNumber}
-                  onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
-                  placeholder="Enter opportunity number"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
-                <div className="space-y-2">
-                  <Input
-                    value={data.address}
-                    onChange={(e) => setData({ ...data, address: e.target.value })}
-                    placeholder="Enter address or use location button"
-                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={getCurrentLocation}
-                    className="gap-2"
-                    type="button"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    Get Current Location
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-            </div>
-          </div>
-          {/* End of print-first-page wrapper */}
-
-          {/* Main Report Content */}
-          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
-          {/* Product Type Filter */}
-          <div className="space-y-4" data-pdf-filter>
-            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-              Product Type Filter
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                <SelectTrigger className="w-full sm:w-[280px]">
-                  <SelectValue placeholder="Select product type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Common">All (Common)</SelectItem>
-                  {data.productTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {editMode && (
-                <div className="flex gap-2 flex-1">
-                  <Input
-                    value={newProductType}
-                    onChange={(e) => setNewProductType(e.target.value)}
-                    placeholder="New product type"
-                    className="flex-1"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addProductType();
-                      }
-                    }}
-                  />
-                  <Button onClick={addProductType} size="sm">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {editMode && (
-              <div className="flex flex-wrap gap-2">
-                {data.productTypes.map((type) => (
-                  <div
-                    key={type}
-                    className="flex items-center gap-2 bg-secondary px-3 py-1 rounded-full text-sm"
-                  >
-                    <span>{type}</span>
-                    <button
-                      onClick={() => deleteProductType(type)}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                    <label className="text-sm font-semibold print:items-start">Project name:</label>
+                    <Input
+                      value={data.projectName}
+                      onChange={(e) => setData({ ...data, projectName: e.target.value })}
+                      placeholder="Enter project name"
+                      className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                    />
                   </div>
-                ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                    <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
+                    <Input
+                      value={data.opportunityNumber}
+                      onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
+                      placeholder="Enter opportunity number"
+                      className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
+                    <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
+                    <div className="space-y-2">
+                      <Input
+                        value={data.address}
+                        onChange={(e) => setData({ ...data, address: e.target.value })}
+                        placeholder="Enter address or use location button"
+                        className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={getCurrentLocation}
+                        className="gap-2"
+                        type="button"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Get Current Location
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Product List */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-              Product List
-            </h2>
+            {/* Product List - included in first page */}
+            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4">
+              <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+                Product List
+              </h2>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse print:table-fixed">
                 <thead>
@@ -475,96 +411,160 @@ const Index = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
+          {/* End of print-first-page wrapper */}
 
-          {/* Categories */}
-          <div className="space-y-6">
-            {(editMode ? data.categories : getFilteredCategories()).map((category, index) => {
-              const originalIndex = editMode ? index : data.categories.findIndex(c => c.id === category.id);
-              return (
-                <CategorySection
-                  key={category.id}
-                  category={category}
-                  onUpdate={(updated) => updateCategory(originalIndex, updated)}
-                  onDelete={() => deleteCategory(originalIndex)}
-                  editMode={editMode}
-                  productTypes={data.productTypes}
-                  selectedFilter={selectedProductType}
-                />
-              );
-            })}
+          {/* Main Report Content */}
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
+            {/* Product Type Filter */}
+            <div className="space-y-4" data-pdf-filter>
+              <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+                Product Type Filter
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                  <SelectTrigger className="w-full sm:w-[280px]">
+                    <SelectValue placeholder="Select product type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Common">All (Common)</SelectItem>
+                    {data.productTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            {editMode && (
-              <Button
-                variant="outline"
-                onClick={addCategory}
-                className="w-full"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Category
-              </Button>
-            )}
-          </div>
+                {editMode && (
+                  <div className="flex gap-2 flex-1">
+                    <Input
+                      value={newProductType}
+                      onChange={(e) => setNewProductType(e.target.value)}
+                      placeholder="New product type"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          addProductType();
+                        }
+                      }}
+                    />
+                    <Button onClick={addProductType} size="sm">
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-          {/* Inspection Date */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">Inspection Date:</label>
-            <Popover>
-              <PopoverTrigger asChild>
+              {editMode && (
+                <div className="flex flex-wrap gap-2">
+                  {data.productTypes.map((type) => (
+                    <div
+                      key={type}
+                      className="flex items-center gap-2 bg-secondary px-3 py-1 rounded-full text-sm"
+                    >
+                      <span>{type}</span>
+                      <button
+                        onClick={() => deleteProductType(type)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Categories */}
+            <div className="space-y-6">
+              {(editMode ? data.categories : getFilteredCategories()).map((category, index) => {
+                const originalIndex = editMode ? index : data.categories.findIndex(c => c.id === category.id);
+                return (
+                  <CategorySection
+                    key={category.id}
+                    category={category}
+                    onUpdate={(updated) => updateCategory(originalIndex, updated)}
+                    onDelete={() => deleteCategory(originalIndex)}
+                    editMode={editMode}
+                    productTypes={data.productTypes}
+                    selectedFilter={selectedProductType}
+                  />
+                );
+              })}
+
+              {editMode && (
                 <Button
                   variant="outline"
-                  className={cn(
-                    "w-full md:w-[280px] justify-start text-left font-normal",
-                    !data.inspectionDate && "text-muted-foreground"
-                  )}
+                  onClick={addCategory}
+                  className="w-full"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {data.inspectionDate ? format(data.inspectionDate, "PPP") : <span>Pick a date</span>}
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Category
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={data.inspectionDate}
-                  onSelect={(date) => setData({ ...data, inspectionDate: date || new Date() })}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+              )}
+            </div>
 
-          {/* Signatures */}
-          <div className="grid md:grid-cols-2 gap-6">
+            {/* Inspection Date */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Commissioner Signature:</label>
-              <SignatureCanvas
-                signature={data.commissionerSignature}
-                onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
-                disabled={!editMode}
-              />
+              <label className="text-sm font-semibold">Inspection Date:</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full md:w-[280px] justify-start text-left font-normal",
+                      !data.inspectionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {data.inspectionDate ? format(data.inspectionDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={data.inspectionDate}
+                    onSelect={(date) => setData({ ...data, inspectionDate: date || new Date() })}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Installer Signature:</label>
-              <SignatureCanvas
-                signature={data.installerSignature}
-                onSave={(signature) => setData({ ...data, installerSignature: signature })}
-                disabled={!editMode}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Customer Signature:</label>
-              <SignatureCanvas
-                signature={data.customerSignature}
-                onSave={(signature) => setData({ ...data, customerSignature: signature })}
-                disabled={!editMode}
-              />
+
+            {/* Signatures */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Commissioner Signature:</label>
+                <SignatureCanvas
+                  signature={data.commissionerSignature}
+                  onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
+                  disabled={!editMode}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Installer Signature:</label>
+                <SignatureCanvas
+                  signature={data.installerSignature}
+                  onSave={(signature) => setData({ ...data, installerSignature: signature })}
+                  disabled={!editMode}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Customer Signature:</label>
+                <SignatureCanvas
+                  signature={data.customerSignature}
+                  onSave={(signature) => setData({ ...data, customerSignature: signature })}
+                  disabled={!editMode}
+                />
+              </div>
             </div>
           </div>
-        </div>
         </div>
 
         {/* Print Button */}
