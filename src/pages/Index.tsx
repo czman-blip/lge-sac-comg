@@ -303,8 +303,8 @@ const Index = () => {
                     </h1>
                   )}
                   <div className="flex gap-2 w-full sm:w-auto">
-                    {/* Only show Edit mode button for users who can edit (admin/editor) */}
-                    {(canEdit || editMode) && (
+                    {/* Show Edit mode button for: not logged in OR logged in with edit permission */}
+                    {(!user || canEdit || editMode) && (
                       <Button
                         variant={editMode ? "default" : "outline"}
                         onClick={handleEditModeToggle}
