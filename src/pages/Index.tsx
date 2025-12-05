@@ -63,6 +63,16 @@ const Index = () => {
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
   const { user, canEdit, signOut } = useAuth();
 
+  // Auto-enable edit mode after successful authentication
+  useEffect(() => {
+    const pendingEditMode = sessionStorage.getItem("pendingEditMode") === "true";
+    if (pendingEditMode && user && canEdit) {
+      setEditMode(true);
+      sessionStorage.removeItem("pendingEditMode");
+      toast.success("Edit mode activated");
+    }
+  }, [user, canEdit]);
+
   // Load template from server and merge with local data
   useEffect(() => {
     const initializeData = async () => {
@@ -155,7 +165,8 @@ const Index = () => {
         setEditMode(true);
         toast.success("Edit mode activated");
       } else {
-        // Show password dialog to redirect to auth
+        // Set pending flag and show password dialog to redirect to auth
+        sessionStorage.setItem("pendingEditMode", "true");
         setShowPasswordDialog(true);
       }
     } else {
