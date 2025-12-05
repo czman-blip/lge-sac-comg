@@ -303,14 +303,17 @@ const Index = () => {
                     </h1>
                   )}
                   <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant={editMode ? "default" : "outline"}
-                      onClick={handleEditModeToggle}
-                      className="flex-1 sm:flex-none"
-                      data-pdf-hide
-                    >
-                      {editMode ? "Edit mode" : "User mode"}
-                    </Button>
+                    {/* Only show Edit mode button for users who can edit (admin/editor) */}
+                    {(canEdit || editMode) && (
+                      <Button
+                        variant={editMode ? "default" : "outline"}
+                        onClick={handleEditModeToggle}
+                        className="flex-1 sm:flex-none"
+                        data-pdf-hide
+                      >
+                        {editMode ? "Edit mode" : "User mode"}
+                      </Button>
+                    )}
                     {user && (
                       <Button
                         variant="ghost"
