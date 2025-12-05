@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
@@ -55,13 +56,14 @@ const defaultData: ReportData = {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
-  const { user, canEdit, signOut } = useAuth();
+  const { user, canEdit, role, signOut } = useAuth();
 
   // Auto-enable edit mode after successful authentication
   useEffect(() => {
@@ -312,6 +314,16 @@ const Index = () => {
                         data-pdf-hide
                       >
                         {editMode ? "Edit mode" : "User mode"}
+                      </Button>
+                    )}
+                    {/* Admin link - only for admin role */}
+                    {user && role === "admin" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/admin")}
+                        data-pdf-hide
+                      >
+                        관리
                       </Button>
                     )}
                     {user && (
