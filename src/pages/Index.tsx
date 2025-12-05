@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, Printer, CalendarIcon, MapPin, X, LogOut } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-
+import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PasswordDialog } from "@/components/PasswordDialog";
+import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { useTemplate } from "@/hooks/useTemplate";
-import { useAuth } from "@/hooks/useAuth";
+import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
 const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
 
@@ -56,24 +56,13 @@ const defaultData: ReportData = {
 };
 
 const Index = () => {
-  const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [data, setData] = useState<ReportData>(defaultData);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
-  const { user, canEdit, role, signOut } = useAuth();
-
-  // Auto-enable edit mode after successful authentication
-  useEffect(() => {
-    const pendingEditMode = sessionStorage.getItem("pendingEditMode") === "true";
-    if (pendingEditMode && user && canEdit) {
-      setEditMode(true);
-      sessionStorage.removeItem("pendingEditMode");
-      toast.success("Edit mode activated");
-    }
-  }, [user, canEdit]);
 
   // Load template from server and merge with local data
   useEffect(() => {
@@ -162,26 +151,13 @@ const Index = () => {
 
   const handleEditModeToggle = () => {
     if (!editMode) {
-      // Entering edit mode - check if user is authenticated with proper role
-      if (user && canEdit) {
-        setEditMode(true);
-        toast.success("Edit mode activated");
-      } else {
-        // Set pending flag and show password dialog to redirect to auth
-        sessionStorage.setItem("pendingEditMode", "true");
-        setShowPasswordDialog(true);
-      }
+      // Entering edit mode - always ask for password
+      setShowPasswordDialog(true);
     } else {
       // Exiting edit mode - save template to server
       saveTemplate(data.categories);
       setEditMode(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    setEditMode(false);
-    toast.success("Signed out successfully");
   };
 
   const addCategory = () => {
@@ -278,8 +254,225 @@ const Index = () => {
     );
   };
 
-  const handlePrint = () => {
-    window.print();
+  const generatePDF = async () => {
+    const loadingToast = toast.loading("Generating PDF...");
+    // Only rebuild the PDF pipeline for robust text rendering; keep all other features intact
+    let hiddenContainer: HTMLDivElement | null = null;
+    let styleEl: HTMLStyleElement | null = null;
+    // Track elements we tag so we can clean them after
+    const tagged: HTMLElement[] = [];
+
+    try {
+      const element = document.getElementById("pdf-content");
+      if (!element) {
+        toast.dismiss(loadingToast);
+        return;
+      }
+
+      // Ensure fonts are fully loaded before rasterization
+      const anyDoc = document as any;
+      if (anyDoc.fonts && anyDoc.fonts.ready) {
+        try { await anyDoc.fonts.ready; } catch {}
+      }
+
+      // Tag originals with stable ids so we can map clone -> original
+      let idCounter = 0;
+      element.querySelectorAll<HTMLElement>('input, textarea, button[aria-haspopup="listbox"], canvas').forEach((el) => {
+        idCounter += 1;
+        el.setAttribute('data-pdf-id', String(idCounter));
+        tagged.push(el);
+      });
+
+      // Also tag the product type filter section to hide it in PDF
+      const filterSection = element.querySelector('[data-pdf-filter]');
+      if (filterSection) {
+        tagged.push(filterSection as HTMLElement);
+      }
+
+      // Deep clone and normalize inside the clone using the original metrics
+      const snapshot = element.cloneNode(true) as HTMLElement;
+      snapshot.classList.add("pdf-snapshot");
+
+      const getOriginal = (id: string) => element.querySelector<HTMLElement>(`[data-pdf-id="${id}"]`)!;
+
+      snapshot.querySelectorAll<HTMLElement>('[data-pdf-id]').forEach((cloneEl) => {
+        const id = cloneEl.getAttribute('data-pdf-id')!;
+        const origEl = getOriginal(id);
+        const cs = getComputedStyle(origEl);
+        const rect = origEl.getBoundingClientRect();
+
+        // Compute robust text metrics
+        const fontSize = parseFloat(cs.fontSize || '16');
+        const lineH = cs.lineHeight === 'normal' ? Math.round(fontSize * 1.5) : Math.round(parseFloat(cs.lineHeight || String(fontSize * 1.5)));
+        const pt = parseFloat(cs.paddingTop || '0');
+        const pb = parseFloat(cs.paddingBottom || '0');
+        const pl = parseFloat(cs.paddingLeft || '0');
+        const pr = parseFloat(cs.paddingRight || '0');
+        const bt = parseFloat(cs.borderTopWidth || '0');
+        const bb = parseFloat(cs.borderBottomWidth || '0');
+        const bl = parseFloat(cs.borderLeftWidth || '0');
+        const br = parseFloat(cs.borderRightWidth || '0');
+
+        // Build static display box to prevent input/select baseline clipping
+        const box = document.createElement('div');
+        box.style.boxSizing = 'border-box';
+        box.style.height = `${Math.ceil(rect.height)}px`;
+        
+        // Optimize width for PDF layout
+        const maxWidth = 600; // Optimized maximum width for input boxes in PDF
+        const boxWidth = Math.min(Math.ceil(rect.width), maxWidth);
+        box.style.width = `${boxWidth}px`;
+        box.style.maxWidth = `${maxWidth}px`;
+        
+        box.style.borderStyle = 'solid';
+        box.style.borderWidth = `${bt}px ${br}px ${bb}px ${bl}px`;
+        box.style.borderColor = cs.borderColor || 'hsl(var(--input))';
+        box.style.borderRadius = cs.borderRadius || 'var(--radius)';
+        // Bias padding slightly to the bottom to avoid visual clipping
+        const adjTop = Math.max(0, pt - 1);
+        const adjBottom = pb + 2;
+        box.style.paddingTop = `${adjTop}px`;
+        box.style.paddingBottom = `${adjBottom}px`;
+        box.style.paddingLeft = `${pl}px`;
+        box.style.paddingRight = `${pr}px`;
+        box.style.background = cs.backgroundColor || '#ffffff';
+        box.style.color = cs.color || '#000';
+        box.style.fontFamily = cs.fontFamily;
+        box.style.fontSize = cs.fontSize;
+        box.style.fontWeight = cs.fontWeight;
+        box.style.letterSpacing = cs.letterSpacing;
+        box.style.lineHeight = `${lineH}px`;
+        box.style.transform = 'translateY(-1px)';
+        box.style.display = 'block';
+
+        const isTextarea = origEl.tagName === 'TEXTAREA';
+        const isInput = origEl.tagName === 'INPUT';
+        const isSelectTrigger = origEl.matches('button[aria-haspopup="listbox"]');
+        const isCanvas = origEl.tagName === 'CANVAS';
+
+        // Hide ALL comboboxes in PDF
+        if (isSelectTrigger) {
+          box.style.display = 'none';
+          cloneEl.replaceWith(box);
+          return;
+        }
+
+        // Convert canvas (signatures) to images for PDF
+        if (isCanvas) {
+          const canvas = origEl as HTMLCanvasElement;
+          const img = document.createElement('img');
+          img.src = canvas.toDataURL();
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.display = 'block';
+          cloneEl.replaceWith(img);
+          return;
+        }
+
+        let text = '';
+        if (isInput) {
+          const input = origEl as HTMLInputElement;
+          text = input.value ?? input.getAttribute('value') ?? '';
+        } else if (isTextarea) {
+          const ta = origEl as HTMLTextAreaElement;
+          text = ta.value ?? ta.textContent ?? '';
+        }
+
+        box.textContent = text;
+        if (isTextarea) {
+          box.style.whiteSpace = 'pre-wrap';
+          box.style.overflow = 'visible';
+        } else {
+          box.style.whiteSpace = 'nowrap';
+          box.style.overflow = 'hidden';
+          box.style.textOverflow = 'ellipsis';
+        }
+
+        cloneEl.replaceWith(box);
+      });
+
+      // Add a hidden off-screen container to render the snapshot
+      hiddenContainer = document.createElement("div");
+      hiddenContainer.style.position = "fixed";
+      hiddenContainer.style.left = "-10000px";
+      hiddenContainer.style.top = "0";
+      hiddenContainer.style.width = element.getBoundingClientRect().width + "px";
+      hiddenContainer.style.background = "#ffffff";
+      hiddenContainer.appendChild(snapshot);
+      document.body.appendChild(hiddenContainer);
+
+      // Temporary CSS to help avoid breaks and enforce color accuracy during rasterization
+      styleEl = document.createElement("style");
+      styleEl.textContent = `
+        .pdf-snapshot .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+        .pdf-snapshot * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .pdf-snapshot table { max-width: 100%; width: 100%; }
+        .pdf-snapshot table td, .pdf-snapshot table th { font-size: 12px !important; padding: 6px !important; }
+        .pdf-snapshot [data-pdf-filter] { display: none !important; }
+        .pdf-snapshot [data-pdf-hide] { display: none !important; }
+        .pdf-snapshot .grid.md\\:grid-cols-2 { 
+          display: grid !important; 
+          grid-template-columns: repeat(3, 1fr) !important; 
+          gap: 0.75rem !important; 
+        }
+        .pdf-snapshot .grid.md\\:grid-cols-2 > div {
+          font-size: 11px !important;
+        }
+        .pdf-snapshot .grid.md\\:grid-cols-2 label {
+          font-size: 10px !important;
+          margin-bottom: 0.25rem !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+
+      const fileName = data.projectName 
+        ? `${data.projectName}_Commissioning_Report.pdf`
+        : "LGE_SAC_Commissioning_Report.pdf";
+
+      const scale = Math.max(2, Math.min(3, (window.devicePixelRatio || 2)));
+      const opt = {
+        margin: 10,
+        filename: fileName,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          letterRendering: true,
+          windowWidth: Math.max(document.documentElement.scrollWidth, element.scrollWidth),
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: {
+          unit: 'pt',
+          format: 'a4',
+          orientation: 'portrait' as const,
+          compress: true,
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as const, avoid: ['.avoid-break', 'tr', 'img'] },
+      };
+
+      await html2pdf().set(opt).from(snapshot).save();
+
+      // Run visibility test on the snapshot used for export
+      const result = runPdfTextVisibilityTest(snapshot);
+      if (!result.pass) {
+        console.warn("PDF text visibility issues detected:", result.issues);
+        toast.warning(`PDF text visibility issues: ${result.issues.length}. See console for details.`);
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success("PDF generated successfully!");
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Failed to generate PDF");
+    } finally {
+      // Clean up added attributes on live DOM
+      tagged.forEach((el) => el.removeAttribute('data-pdf-id'));
+      if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+      if (hiddenContainer && hiddenContainer.parentNode) hiddenContainer.parentNode.removeChild(hiddenContainer);
+    }
   };
 
   return (
@@ -287,115 +480,160 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* PDF Content - includes everything */}
         <div id="pdf-content" className="space-y-6">
-          {/* Header + Project Info + Product List - keep together on first page */}
-          <div className="print-first-page space-y-6">
-            {/* Header */}
-            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  {editMode ? (
-                    <Input
-                      value={data.title}
-                      onChange={(e) => setData({ ...data, title: e.target.value })}
-                      className="text-3xl font-bold text-primary h-14"
-                    />
-                  ) : (
-                    <h1 className="text-3xl font-bold text-primary">
-                      {data.title}
-                    </h1>
+          {/* Header */}
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                {editMode ? (
+                  <Input
+                    value={data.title}
+                    onChange={(e) => setData({ ...data, title: e.target.value })}
+                    className="text-3xl font-bold text-primary h-14"
+                  />
+                ) : (
+                  <h1 className="text-3xl font-bold text-primary">
+                    {data.title}
+                  </h1>
+                )}
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant={editMode ? "default" : "outline"}
+                    onClick={handleEditModeToggle}
+                    className="flex-1 sm:flex-none"
+                    data-pdf-hide
+                  >
+                    {editMode ? "Edit mode" : "User mode"}
+                  </Button>
+                  {editMode && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowChangePasswordDialog(true)}
+                      title="Change password"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
                   )}
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    {/* Show Edit mode button for: not logged in OR logged in with edit permission */}
-                    {(!user || canEdit || editMode) && (
-                      <Button
-                        variant={editMode ? "default" : "outline"}
-                        onClick={handleEditModeToggle}
-                        className="flex-1 sm:flex-none"
-                        data-pdf-hide
-                      >
-                        {editMode ? "Edit mode" : "User mode"}
-                      </Button>
-                    )}
-                    {/* Admin link - only for admin role */}
-                    {user && role === "admin" && (
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate("/admin")}
-                        data-pdf-hide
-                      >
-                        관리
-                      </Button>
-                    )}
-                    {user && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleSignOut}
-                        title="Sign out"
-                      >
-                        <LogOut className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Project Information Card */}
-            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-                  Project Information
-                </h2>
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                    <label className="text-sm font-semibold print:items-start">Project name:</label>
-                    <Input
-                      value={data.projectName}
-                      onChange={(e) => setData({ ...data, projectName: e.target.value })}
-                      placeholder="Enter project name"
-                      className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
-                    <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
-                    <Input
-                      value={data.opportunityNumber}
-                      onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
-                      placeholder="Enter opportunity number"
-                      className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                    <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
-                    <div className="space-y-2">
-                      <Input
-                        value={data.address}
-                        onChange={(e) => setData({ ...data, address: e.target.value })}
-                        placeholder="Enter address or use location button"
-                        className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={getCurrentLocation}
-                        className="gap-2"
-                        type="button"
-                      >
-                        <MapPin className="w-4 h-4" />
-                        Get Current Location
-                      </Button>
-                    </div>
-                  </div>
+          {/* Main Report Content */}
+          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
+          {/* Project Information */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Project Information
+            </h2>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                <label className="text-sm font-semibold print:items-start">Project name:</label>
+                <Input
+                  value={data.projectName}
+                  onChange={(e) => setData({ ...data, projectName: e.target.value })}
+                  placeholder="Enter project name"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
+                <label className="text-sm font-semibold print:items-start">Opportunity number:</label>
+                <Input
+                  value={data.opportunityNumber}
+                  onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
+                  placeholder="Enter opportunity number"
+                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
+                <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
+                <div className="space-y-2">
+                  <Input
+                    value={data.address}
+                    onChange={(e) => setData({ ...data, address: e.target.value })}
+                    placeholder="Enter address or use location button"
+                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={getCurrentLocation}
+                    className="gap-2"
+                    type="button"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Get Current Location
+                  </Button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Product List - included in first page */}
-            <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4">
-              <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-                Product List
-              </h2>
+          {/* Product Type Filter */}
+          <div className="space-y-4" data-pdf-filter>
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Product Type Filter
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <SelectTrigger className="w-full sm:w-[280px]">
+                  <SelectValue placeholder="Select product type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Common">All (Common)</SelectItem>
+                  {data.productTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {editMode && (
+                <div className="flex gap-2 flex-1">
+                  <Input
+                    value={newProductType}
+                    onChange={(e) => setNewProductType(e.target.value)}
+                    placeholder="New product type"
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        addProductType();
+                      }
+                    }}
+                  />
+                  <Button onClick={addProductType} size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {editMode && (
+              <div className="flex flex-wrap gap-2">
+                {data.productTypes.map((type) => (
+                  <div
+                    key={type}
+                    className="flex items-center gap-2 bg-secondary px-3 py-1 rounded-full text-sm"
+                  >
+                    <span>{type}</span>
+                    <button
+                      onClick={() => deleteProductType(type)}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Product List */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+              Product List
+            </h2>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse print:table-fixed">
                 <thead>
@@ -437,171 +675,107 @@ const Index = () => {
                   ))}
                 </tbody>
               </table>
-              </div>
             </div>
           </div>
-          {/* End of print-first-page wrapper */}
 
-          {/* Main Report Content */}
-          <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
-            {/* Product Type Filter */}
-            <div className="space-y-4" data-pdf-filter>
-              <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
-                Product Type Filter
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                  <SelectTrigger className="w-full sm:w-[280px]">
-                    <SelectValue placeholder="Select product type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Common">All (Common)</SelectItem>
-                    {data.productTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Categories */}
+          <div className="space-y-6">
+            {(editMode ? data.categories : getFilteredCategories()).map((category, index) => {
+              const originalIndex = editMode ? index : data.categories.findIndex(c => c.id === category.id);
+              return (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  onUpdate={(updated) => updateCategory(originalIndex, updated)}
+                  onDelete={() => deleteCategory(originalIndex)}
+                  editMode={editMode}
+                  productTypes={data.productTypes}
+                  selectedFilter={selectedProductType}
+                />
+              );
+            })}
 
-                {editMode && (
-                  <div className="flex gap-2 flex-1">
-                    <Input
-                      value={newProductType}
-                      onChange={(e) => setNewProductType(e.target.value)}
-                      placeholder="New product type"
-                      className="flex-1"
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          addProductType();
-                        }
-                      }}
-                    />
-                    <Button onClick={addProductType} size="sm">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+            {editMode && (
+              <Button
+                variant="outline"
+                onClick={addCategory}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Category
+              </Button>
+            )}
+          </div>
 
-              {editMode && (
-                <div className="flex flex-wrap gap-2">
-                  {data.productTypes.map((type) => (
-                    <div
-                      key={type}
-                      className="flex items-center gap-2 bg-secondary px-3 py-1 rounded-full text-sm"
-                    >
-                      <span>{type}</span>
-                      <button
-                        onClick={() => deleteProductType(type)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Categories */}
-            <div className="space-y-6">
-              {(editMode ? data.categories : getFilteredCategories()).map((category, index) => {
-                const originalIndex = editMode ? index : data.categories.findIndex(c => c.id === category.id);
-                return (
-                  <CategorySection
-                    key={category.id}
-                    category={category}
-                    onUpdate={(updated) => updateCategory(originalIndex, updated)}
-                    onDelete={() => deleteCategory(originalIndex)}
-                    editMode={editMode}
-                    productTypes={data.productTypes}
-                    selectedFilter={selectedProductType}
-                  />
-                );
-              })}
-
-              {editMode && (
+          {/* Inspection Date */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Inspection Date:</label>
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={addCategory}
-                  className="w-full"
+                  className={cn(
+                    "w-full md:w-[280px] justify-start text-left font-normal",
+                    !data.inspectionDate && "text-muted-foreground"
+                  )}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Category
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {data.inspectionDate ? format(data.inspectionDate, "PPP") : <span>Pick a date</span>}
                 </Button>
-              )}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={data.inspectionDate}
+                  onSelect={(date) => setData({ ...data, inspectionDate: date || new Date() })}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
-            {/* Inspection Date */}
+          {/* Signatures */}
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Inspection Date:</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full md:w-[280px] justify-start text-left font-normal",
-                      !data.inspectionDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {data.inspectionDate ? format(data.inspectionDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={data.inspectionDate}
-                    onSelect={(date) => setData({ ...data, inspectionDate: date || new Date() })}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <label className="text-sm font-semibold">Commissioner Signature:</label>
+              <SignatureCanvas
+                signature={data.commissionerSignature}
+                onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
+                disabled={!editMode}
+              />
             </div>
-
-            {/* Signatures */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Commissioner Signature:</label>
-                <SignatureCanvas
-                  signature={data.commissionerSignature}
-                  onSave={(signature) => setData({ ...data, commissionerSignature: signature })}
-                  disabled={!editMode}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Installer Signature:</label>
-                <SignatureCanvas
-                  signature={data.installerSignature}
-                  onSave={(signature) => setData({ ...data, installerSignature: signature })}
-                  disabled={!editMode}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Customer Signature:</label>
-                <SignatureCanvas
-                  signature={data.customerSignature}
-                  onSave={(signature) => setData({ ...data, customerSignature: signature })}
-                  disabled={!editMode}
-                />
-              </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Installer Signature:</label>
+              <SignatureCanvas
+                signature={data.installerSignature}
+                onSave={(signature) => setData({ ...data, installerSignature: signature })}
+                disabled={!editMode}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Customer Signature:</label>
+              <SignatureCanvas
+                signature={data.customerSignature}
+                onSave={(signature) => setData({ ...data, customerSignature: signature })}
+                disabled={!editMode}
+              />
             </div>
           </div>
         </div>
+        </div>
 
-        {/* Print Button */}
-        <div className="mt-6 flex justify-center print:hidden">
+        {/* PDF Button */}
+        <div className="mt-6 flex justify-center">
           <Button
-            onClick={handlePrint}
+            onClick={generatePDF}
             size="lg"
             className="gap-2"
           >
-            <Printer className="w-5 h-5" />
-            Print
+            <FileDown className="w-5 h-5" />
+            Generate PDF
           </Button>
         </div>
       </div>
@@ -611,6 +785,10 @@ const Index = () => {
         open={showPasswordDialog}
         onOpenChange={setShowPasswordDialog}
         onSuccess={() => setEditMode(true)}
+      />
+      <ChangePasswordDialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
       />
     </div>
   );
