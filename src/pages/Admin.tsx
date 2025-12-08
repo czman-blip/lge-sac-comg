@@ -13,22 +13,23 @@ import { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-interface UserRole {
+interface UserRoleWithEmail {
   id: string;
   user_id: string;
   role: AppRole;
   created_at: string;
-  email?: string;
+  email: string;
 }
 
 const Admin = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRoleWithEmail[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<AppRole>("viewer");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(true);
+  const [addingRole, setAddingRole] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -69,13 +70,33 @@ const Admin = () => {
   const loadUserRoles = async () => {
     setLoadingRoles(true);
     try {
-      const { data, error } = await supabase
+      // Get user roles with profile email
+      const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setUserRoles(data || []);
+      if (rolesError) throw rolesError;
+
+      // Get profiles for all users with roles
+      const userIds = roles?.map((r) => r.user_id) || [];
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Merge roles with emails
+      const rolesWithEmail: UserRoleWithEmail[] = (roles || []).map((role) => {
+        const profile = profiles?.find((p) => p.id === role.user_id);
+        return {
+          ...role,
+          email: profile?.email || "Unknown",
+        };
+      });
+
+      setUserRoles(rolesWithEmail);
     } catch (error) {
       console.error("Error loading user roles:", error);
       toast.error("역할 목록을 불러오는데 실패했습니다");
@@ -84,47 +105,56 @@ const Admin = () => {
     }
   };
 
-  const addUserRole = async () => {
+  const addUserRoleByEmail = async () => {
     if (!newEmail.trim()) {
       toast.error("이메일을 입력해주세요");
       return;
     }
 
+    setAddingRole(true);
     try {
-      // First, find the user by email using auth.users through a custom approach
-      // Since we can't directly query auth.users, we'll need to use the user_id
-      // The admin should provide the user_id or we need a different approach
-      
-      // For now, we'll create a role entry - the admin needs to get the user_id
-      // from the user or use a lookup mechanism
-      
-      toast.error("사용자 ID를 직접 입력해야 합니다. 이메일로 조회하는 기능은 별도 구현이 필요합니다.");
-      return;
-    } catch (error) {
-      console.error("Error adding user role:", error);
-      toast.error("역할 추가에 실패했습니다");
-    }
-  };
+      // Find user by email in profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", newEmail.trim().toLowerCase())
+        .maybeSingle();
 
-  const addUserRoleById = async (userId: string, role: AppRole) => {
-    try {
-      const { error } = await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: role,
+      if (profileError) throw profileError;
+
+      if (!profile) {
+        toast.error("해당 이메일의 사용자를 찾을 수 없습니다. 먼저 회원가입을 해야 합니다.");
+        return;
+      }
+
+      // Check if role already exists
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+
+      if (existingRole) {
+        toast.error("이미 해당 사용자에게 역할이 할당되어 있습니다");
+        return;
+      }
+
+      // Add role
+      const { error: insertError } = await supabase.from("user_roles").insert({
+        user_id: profile.id,
+        role: newRole,
       });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success("역할이 추가되었습니다");
-      await loadUserRoles();
       setNewEmail("");
+      await loadUserRoles();
     } catch (error: any) {
       console.error("Error adding user role:", error);
-      if (error.code === "23505") {
-        toast.error("이미 해당 역할이 할당되어 있습니다");
-      } else {
-        toast.error("역할 추가에 실패했습니다");
-      }
+      toast.error(error.message || "역할 추가에 실패했습니다");
+    } finally {
+      setAddingRole(false);
     }
   };
 
@@ -185,7 +215,8 @@ const Admin = () => {
           {/* Add new role */}
           <div className="flex gap-2 mb-6">
             <Input
-              placeholder="사용자 ID (UUID)"
+              placeholder="이메일 주소"
+              type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               className="flex-1"
@@ -200,9 +231,9 @@ const Admin = () => {
                 <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => addUserRoleById(newEmail, newRole)}>
+            <Button onClick={addUserRoleByEmail} disabled={addingRole}>
               <UserPlus className="mr-2 h-4 w-4" />
-              추가
+              {addingRole ? "추가 중..." : "추가"}
             </Button>
           </div>
 
@@ -215,7 +246,7 @@ const Admin = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>사용자 ID</TableHead>
+                  <TableHead>이메일</TableHead>
                   <TableHead>역할</TableHead>
                   <TableHead className="w-20">작업</TableHead>
                 </TableRow>
@@ -223,7 +254,7 @@ const Admin = () => {
               <TableBody>
                 {userRoles.map((ur) => (
                   <TableRow key={ur.id}>
-                    <TableCell className="font-mono text-xs">{ur.user_id}</TableCell>
+                    <TableCell>{ur.email}</TableCell>
                     <TableCell>
                       <Select
                         value={ur.role}
