@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X, Printer } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, MapPin, X, Printer, LogOut } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
@@ -12,9 +12,9 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { PasswordDialog } from "@/components/PasswordDialog";
-import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { LoginDialog } from "@/components/LoginDialog";
 import { useTemplate } from "@/hooks/useTemplate";
+import { useAuth } from "@/hooks/useAuth";
 import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
 const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
@@ -58,12 +58,11 @@ const defaultData: ReportData = {
 const Index = () => {
   const [editMode, setEditMode] = useState(false);
   const [data, setData] = useState<ReportData>(defaultData);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
-
+  const { user, canEdit, signOut, loading: authLoading } = useAuth();
   // Load template from server and merge with local data
   useEffect(() => {
     const initializeData = async () => {
@@ -149,15 +148,30 @@ const Index = () => {
     localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(localInspectionData));
   }, [data]);
 
-  const handleEditModeToggle = () => {
+  const handleEditModeToggle = async () => {
     if (!editMode) {
-      // Entering edit mode - always ask for password
-      setShowPasswordDialog(true);
+      // Entering edit mode - check if user is logged in and has permission
+      if (!user) {
+        setShowLoginDialog(true);
+        return;
+      }
+      if (!canEdit) {
+        toast.error("편집 권한이 없습니다. 관리자에게 문의하세요.");
+        return;
+      }
+      setEditMode(true);
+      toast.success("편집 모드가 활성화되었습니다");
     } else {
       // Exiting edit mode - save template to server
-      saveTemplate(data.categories);
+      await saveTemplate(data.categories);
       setEditMode(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    setEditMode(false);
+    toast.success("로그아웃 되었습니다");
   };
 
   const addCategory = () => {
@@ -504,14 +518,14 @@ const Index = () => {
                   >
                     {editMode ? "Edit mode" : "User mode"}
                   </Button>
-                  {editMode && (
+                  {user && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowChangePasswordDialog(true)}
-                      title="Change password"
+                      onClick={handleLogout}
+                      title="로그아웃"
                     >
-                      <KeyRound className="w-4 h-4" />
+                      <LogOut className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
@@ -790,14 +804,17 @@ const Index = () => {
       </div>
 
       {/* Dialogs */}
-      <PasswordDialog
-        open={showPasswordDialog}
-        onOpenChange={setShowPasswordDialog}
-        onSuccess={() => setEditMode(true)}
-      />
-      <ChangePasswordDialog
-        open={showChangePasswordDialog}
-        onOpenChange={setShowChangePasswordDialog}
+      <LoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        onSuccess={() => {
+          if (canEdit) {
+            setEditMode(true);
+            toast.success("편집 모드가 활성화되었습니다");
+          } else {
+            toast.error("편집 권한이 없습니다. 관리자에게 문의하세요.");
+          }
+        }}
       />
     </div>
   );
