@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X } from "lucide-react";
+import { Plus, FileDown, CalendarIcon, KeyRound, MapPin, X, Printer } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
@@ -767,8 +767,8 @@ const Index = () => {
         </div>
         </div>
 
-        {/* PDF Button */}
-        <div className="mt-6 flex justify-center">
+        {/* PDF Buttons */}
+        <div className="mt-6 flex justify-center gap-4">
           <Button
             onClick={generatePDF}
             size="lg"
@@ -776,6 +776,15 @@ const Index = () => {
           >
             <FileDown className="w-5 h-5" />
             Generate PDF
+          </Button>
+          <Button
+            onClick={() => window.print()}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <Printer className="w-5 h-5" />
+            Print PDF
           </Button>
         </div>
       </div>
