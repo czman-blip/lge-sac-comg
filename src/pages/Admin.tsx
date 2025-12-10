@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Trash2, UserPlus, Check, X } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -21,10 +23,20 @@ interface UserRoleWithEmail {
   email: string;
 }
 
+interface RoleRequest {
+  id: string;
+  user_id: string;
+  requested_role: AppRole;
+  status: string;
+  created_at: string;
+  email: string;
+}
+
 const Admin = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [userRoles, setUserRoles] = useState<UserRoleWithEmail[]>([]);
+  const [roleRequests, setRoleRequests] = useState<RoleRequest[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<AppRole>("viewer");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -38,11 +50,11 @@ const Admin = () => {
     }
 
     if (user) {
-      checkAdminAndLoadRoles();
+      checkAdminAndLoadData();
     }
   }, [user, loading, navigate]);
 
-  const checkAdminAndLoadRoles = async () => {
+  const checkAdminAndLoadData = async () => {
     if (!user) return;
 
     try {
@@ -60,7 +72,7 @@ const Admin = () => {
       }
 
       setIsAdmin(true);
-      await loadUserRoles();
+      await Promise.all([loadUserRoles(), loadRoleRequests()]);
     } catch (error) {
       console.error("Error checking admin role:", error);
       navigate("/");
@@ -70,7 +82,6 @@ const Admin = () => {
   const loadUserRoles = async () => {
     setLoadingRoles(true);
     try {
-      // Get user roles with profile email
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*")
@@ -78,7 +89,6 @@ const Admin = () => {
 
       if (rolesError) throw rolesError;
 
-      // Get profiles for all users with roles
       const userIds = roles?.map((r) => r.user_id) || [];
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -87,7 +97,6 @@ const Admin = () => {
 
       if (profilesError) throw profilesError;
 
-      // Merge roles with emails
       const rolesWithEmail: UserRoleWithEmail[] = (roles || []).map((role) => {
         const profile = profiles?.find((p) => p.id === role.user_id);
         return {
@@ -105,6 +114,86 @@ const Admin = () => {
     }
   };
 
+  const loadRoleRequests = async () => {
+    try {
+      const { data: requests, error: requestsError } = await supabase
+        .from("role_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (requestsError) throw requestsError;
+
+      const userIds = requests?.map((r) => r.user_id) || [];
+      if (userIds.length === 0) {
+        setRoleRequests([]);
+        return;
+      }
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      const requestsWithEmail: RoleRequest[] = (requests || []).map((req) => {
+        const profile = profiles?.find((p) => p.id === req.user_id);
+        return {
+          ...req,
+          email: profile?.email || "Unknown",
+        };
+      });
+
+      setRoleRequests(requestsWithEmail);
+    } catch (error) {
+      console.error("Error loading role requests:", error);
+    }
+  };
+
+  const approveRequest = async (request: RoleRequest) => {
+    try {
+      // Add role
+      const { error: insertError } = await supabase.from("user_roles").insert({
+        user_id: request.user_id,
+        role: request.requested_role,
+      });
+
+      if (insertError) throw insertError;
+
+      // Update request status
+      const { error: updateError } = await supabase
+        .from("role_requests")
+        .update({ status: "approved" })
+        .eq("id", request.id);
+
+      if (updateError) throw updateError;
+
+      toast.success(`${request.email}에게 ${request.requested_role} 역할이 승인되었습니다`);
+      await Promise.all([loadUserRoles(), loadRoleRequests()]);
+    } catch (error: any) {
+      console.error("Error approving request:", error);
+      toast.error(error.message || "승인 처리에 실패했습니다");
+    }
+  };
+
+  const rejectRequest = async (request: RoleRequest) => {
+    try {
+      const { error } = await supabase
+        .from("role_requests")
+        .update({ status: "rejected" })
+        .eq("id", request.id);
+
+      if (error) throw error;
+
+      toast.success("요청이 거절되었습니다");
+      await loadRoleRequests();
+    } catch (error: any) {
+      console.error("Error rejecting request:", error);
+      toast.error("거절 처리에 실패했습니다");
+    }
+  };
+
   const addUserRoleByEmail = async () => {
     if (!newEmail.trim()) {
       toast.error("이메일을 입력해주세요");
@@ -113,7 +202,6 @@ const Admin = () => {
 
     setAddingRole(true);
     try {
-      // Find user by email in profiles table
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, email")
@@ -127,7 +215,6 @@ const Admin = () => {
         return;
       }
 
-      // Check if role already exists
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
@@ -139,7 +226,6 @@ const Admin = () => {
         return;
       }
 
-      // Add role
       const { error: insertError } = await supabase.from("user_roles").insert({
         user_id: profile.id,
         role: newRole,
@@ -212,79 +298,143 @@ const Admin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Add new role */}
-          <div className="flex gap-2 mb-6">
-            <Input
-              placeholder="이메일 주소"
-              type="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              className="flex-1"
-            />
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={addUserRoleByEmail} disabled={addingRole}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              {addingRole ? "추가 중..." : "추가"}
-            </Button>
-          </div>
+          <Tabs defaultValue="requests">
+            <TabsList className="mb-4">
+              <TabsTrigger value="requests">
+                승인 대기
+                {roleRequests.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {roleRequests.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="roles">역할 관리</TabsTrigger>
+            </TabsList>
 
-          {/* User roles table */}
-          {loadingRoles ? (
-            <p className="text-center py-4">로딩 중...</p>
-          ) : userRoles.length === 0 ? (
-            <p className="text-center py-4 text-muted-foreground">등록된 역할이 없습니다</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>이메일</TableHead>
-                  <TableHead>역할</TableHead>
-                  <TableHead className="w-20">작업</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {userRoles.map((ur) => (
-                  <TableRow key={ur.id}>
-                    <TableCell>{ur.email}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={ur.role}
-                        onValueChange={(v) => updateUserRole(ur.id, v as AppRole)}
-                      >
-                        <SelectTrigger className="w-28">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="editor">Editor</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteUserRole(ur.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+            <TabsContent value="requests">
+              {roleRequests.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">대기 중인 요청이 없습니다</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이메일</TableHead>
+                      <TableHead>요청 역할</TableHead>
+                      <TableHead>요청일</TableHead>
+                      <TableHead className="w-24">작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {roleRequests.map((req) => (
+                      <TableRow key={req.id}>
+                        <TableCell>{req.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{req.requested_role}</Badge>
+                        </TableCell>
+                        <TableCell>{new Date(req.created_at).toLocaleDateString("ko-KR")}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => approveRequest(req)}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => rejectRequest(req)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+
+            <TabsContent value="roles">
+              {/* Add new role */}
+              <div className="flex gap-2 mb-6">
+                <Input
+                  placeholder="이메일 주소"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="flex-1"
+                />
+                <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={addUserRoleByEmail} disabled={addingRole}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {addingRole ? "추가 중..." : "추가"}
+                </Button>
+              </div>
+
+              {/* User roles table */}
+              {loadingRoles ? (
+                <p className="text-center py-4">로딩 중...</p>
+              ) : userRoles.length === 0 ? (
+                <p className="text-center py-4 text-muted-foreground">등록된 역할이 없습니다</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이메일</TableHead>
+                      <TableHead>역할</TableHead>
+                      <TableHead className="w-20">작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {userRoles.map((ur) => (
+                      <TableRow key={ur.id}>
+                        <TableCell>{ur.email}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={ur.role}
+                            onValueChange={(v) => updateUserRole(ur.id, v as AppRole)}
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="editor">Editor</SelectItem>
+                              <SelectItem value="viewer">Viewer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteUserRole(ur.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
