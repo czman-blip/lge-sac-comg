@@ -178,27 +178,6 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       reports: {
         Row: {
           address: string | null
@@ -235,33 +214,6 @@ export type Database = {
           opportunity_number?: string | null
           project_name?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      role_requests: {
-        Row: {
-          created_at: string
-          id: string
-          requested_role: Database["public"]["Enums"]["app_role"]
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          requested_role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          requested_role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
