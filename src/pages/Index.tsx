@@ -106,7 +106,8 @@ const Index = () => {
       }
 
       // Merge template with local inspection data
-      const mergedCategories = (template.length > 0 ? template : defaultData.categories).map(category => ({
+      const serverCategories = template.categories.length > 0 ? template.categories : defaultData.categories;
+      const mergedCategories = serverCategories.map(category => ({
         ...category,
         items: category.items.map(item => {
           const localItem = localInspectionData[item.id];
@@ -124,6 +125,7 @@ const Index = () => {
         ...defaultData,
         ...projectInfo,
         categories: mergedCategories,
+        productTypes: template.productTypes.length > 0 ? template.productTypes : defaultData.productTypes,
       });
     };
 
@@ -154,8 +156,8 @@ const Index = () => {
       // Entering edit mode - always ask for password
       setShowPasswordDialog(true);
     } else {
-      // Exiting edit mode - save template to server
-      saveTemplate(data.categories);
+      // Exiting edit mode - save template to server (categories and productTypes)
+      saveTemplate(data.categories, data.productTypes);
       setEditMode(false);
     }
   };

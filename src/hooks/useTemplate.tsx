@@ -1,29 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/types/report";
 import { toast } from "sonner";
 
-interface TemplateCategory {
-  id: string;
-  name: string;
-  sort_order: number;
-}
-
-interface TemplateItem {
-  id: string;
-  category_id: string;
-  text: string;
-  product_type: string;
-  reference_images: string[];
-  sort_order: number;
+interface TemplateData {
+  categories: Category[];
+  productTypes: string[];
 }
 
 export const useTemplate = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadTemplate = async (): Promise<Category[]> => {
+  const loadTemplate = async (): Promise<TemplateData> => {
     setIsLoading(true);
     try {
+      // Load categories
       const { data: categories, error: catError } = await supabase
         .from("template_categories")
         .select("*")
@@ -31,16 +22,30 @@ export const useTemplate = () => {
 
       if (catError) throw catError;
 
-      if (!categories || categories.length === 0) {
-        return [];
-      }
-
+      // Load items
       const { data: items, error: itemsError } = await supabase
         .from("template_items")
         .select("*")
         .order("sort_order");
 
       if (itemsError) throw itemsError;
+
+      // Load product types from settings
+      const { data: settings, error: settingsError } = await supabase
+        .from("template_settings")
+        .select("value")
+        .eq("key", "product_types")
+        .maybeSingle();
+
+      if (settingsError) {
+        console.error("Failed to load product types:", settingsError);
+      }
+
+      const productTypes = settings?.value as string[] || ["Multi V", "AHU", "ISC", "Water", "H/Kit"];
+
+      if (!categories || categories.length === 0) {
+        return { categories: [], productTypes };
+      }
 
       const template: Category[] = categories.map((cat) => ({
         id: cat.id,
@@ -59,42 +64,64 @@ export const useTemplate = () => {
           })),
       }));
 
-      return template;
+      return { categories: template, productTypes };
     } catch (error) {
       console.error("Failed to load template:", error);
       toast.error("Failed to load template from server");
-      return [];
+      return { categories: [], productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"] };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveTemplate = async (categories: Category[]) => {
+  const saveTemplate = async (categories: Category[], productTypes: string[]) => {
     setIsLoading(true);
     try {
-      // Delete existing template
-      await supabase.from("template_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      await supabase.from("template_categories").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      // Delete existing template items first, then categories
+      const { error: deleteItemsError } = await supabase
+        .from("template_items")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      
+      if (deleteItemsError) {
+        console.error("Failed to delete template items:", deleteItemsError);
+        throw deleteItemsError;
+      }
+
+      const { error: deleteCatError } = await supabase
+        .from("template_categories")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (deleteCatError) {
+        console.error("Failed to delete template categories:", deleteCatError);
+        throw deleteCatError;
+      }
 
       // Create ID mapping for categories (old ID -> new UUID)
       const categoryIdMap = new Map<string, string>();
       
       // Insert categories with new UUIDs
-      const categoryInserts = categories.map((cat, index) => {
-        const newId = crypto.randomUUID();
-        categoryIdMap.set(cat.id, newId);
-        return {
-          id: newId,
-          name: cat.name,
-          sort_order: index,
-        };
-      });
+      if (categories.length > 0) {
+        const categoryInserts = categories.map((cat, index) => {
+          const newId = crypto.randomUUID();
+          categoryIdMap.set(cat.id, newId);
+          return {
+            id: newId,
+            name: cat.name,
+            sort_order: index,
+          };
+        });
 
-      const { error: catError } = await supabase
-        .from("template_categories")
-        .insert(categoryInserts);
+        const { error: catError } = await supabase
+          .from("template_categories")
+          .insert(categoryInserts);
 
-      if (catError) throw catError;
+        if (catError) {
+          console.error("Failed to insert categories:", catError);
+          throw catError;
+        }
+      }
 
       // Insert items with new UUIDs and mapped category IDs
       const itemInserts = categories.flatMap((cat) =>
@@ -113,7 +140,23 @@ export const useTemplate = () => {
           .from("template_items")
           .insert(itemInserts);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Failed to insert items:", itemsError);
+          throw itemsError;
+        }
+      }
+
+      // Save product types using upsert
+      const { error: settingsError } = await supabase
+        .from("template_settings")
+        .upsert(
+          { key: "product_types", value: productTypes },
+          { onConflict: "key" }
+        );
+
+      if (settingsError) {
+        console.error("Failed to save product types:", settingsError);
+        throw settingsError;
       }
 
       toast.success("Template saved to server");
