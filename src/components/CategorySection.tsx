@@ -23,6 +23,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
       issue: "",
       images: [],
       productType: "Common",
+      referenceImages: [],
     };
     onUpdate({ ...category, items: [...category.items, newItem] });
   };
