@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PasswordDialogProps {
   open: boolean;
@@ -21,17 +22,33 @@ const PASSWORD_KEY = "edit_mode_password";
 
 export const PasswordDialog = ({ open, onOpenChange, onSuccess }: PasswordDialogProps) => {
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const storedPassword = sessionStorage.getItem(PASSWORD_KEY) || ADMIN_PASSWORD;
     
     if (password === storedPassword) {
-      onSuccess();
-      onOpenChange(false);
-      setPassword("");
-      toast.success("Edit mode activated");
+      setIsLoading(true);
+      try {
+        // Sign in anonymously to get auth.uid() for RLS policies
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+          console.error("Anonymous sign-in failed:", error);
+          toast.error("Failed to authenticate for edit mode");
+          return;
+        }
+        onSuccess();
+        onOpenChange(false);
+        setPassword("");
+        toast.success("Edit mode activated");
+      } catch (error) {
+        console.error("Authentication error:", error);
+        toast.error("Failed to activate edit mode");
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast.error("Incorrect password");
       setPassword("");
@@ -66,7 +83,9 @@ export const PasswordDialog = ({ open, onOpenChange, onSuccess }: PasswordDialog
             >
               Cancel
             </Button>
-            <Button type="submit">Submit</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Loading..." : "Submit"}
+            </Button>
           </div>
         </form>
       </DialogContent>
