@@ -11,11 +11,11 @@ interface ImageUploadProps {
 }
 
 // Constants for image optimization
-const MAX_WIDTH = 800;
-const MAX_HEIGHT = 800;
-const JPEG_QUALITY = 0.7;
-const MAX_IMAGES_DEFAULT = 10;
-const MAX_FILE_SIZE_MB = 10;
+const MAX_WIDTH = 1600;
+const MAX_HEIGHT = 1600;
+const JPEG_QUALITY = 0.9;
+const MAX_IMAGES_DEFAULT = 50;
+const MAX_FILE_SIZE_MB = 15;
 
 // Optimized image resizing with proper cleanup
 const resizeImage = (file: File): Promise<string> => {
