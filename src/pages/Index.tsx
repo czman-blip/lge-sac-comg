@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
@@ -16,8 +16,11 @@ import { PasswordDialog } from "@/components/PasswordDialog";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { useTemplate } from "@/hooks/useTemplate";
 import { runPdfTextVisibilityTest } from "@/lib/pdfVisibilityTest";
+import { safeLocalStorageSave, safeLocalStorageLoad } from "@/hooks/useLocalStorage";
+
 const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
+const SAVE_DEBOUNCE_MS = 500;
 
 const defaultData: ReportData = {
   title: "LGE SAC Commissioning Report",
@@ -63,6 +66,8 @@ const Index = () => {
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitializedRef = useRef(false);
 
   // Load template from server and merge with local data
   useEffect(() => {
@@ -70,40 +75,25 @@ const Index = () => {
       const template = await loadTemplate();
       
       // Load local inspection data (OK, NG, Issue, Images)
-      const localData = localStorage.getItem(LOCAL_DATA_KEY);
-      let localInspectionData: any = {};
-      
-      if (localData) {
-        try {
-          localInspectionData = JSON.parse(localData);
-        } catch (e) {
-          console.error("Failed to parse local data:", e);
-        }
-      }
+      const localInspectionData = safeLocalStorageLoad<Record<string, { ok: boolean; ng: boolean; issue: string; images: string[] }>>(
+        LOCAL_DATA_KEY, 
+        {}
+      );
 
       // Load project info from old storage for backward compatibility
-      const saved = localStorage.getItem(STORAGE_KEY);
-      let projectInfo: any = {};
-      
-      if (saved) {
-        try {
-          const parsedData = JSON.parse(saved);
-          projectInfo = {
-            title: parsedData.title || "LGE SAC Commissioning Report",
-            projectName: parsedData.projectName || "",
-            opportunityNumber: parsedData.opportunityNumber || "",
-            address: parsedData.address || "",
-            products: parsedData.products || defaultData.products,
-            inspectionDate: parsedData.inspectionDate ? new Date(parsedData.inspectionDate) : new Date(),
-            commissionerSignature: parsedData.commissionerSignature || "",
-            installerSignature: parsedData.installerSignature || "",
-            customerSignature: parsedData.customerSignature || "",
-            productTypes: parsedData.productTypes || ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
-          };
-        } catch (e) {
-          console.error("Failed to load saved data:", e);
-        }
-      }
+      const savedData = safeLocalStorageLoad<Partial<ReportData> | null>(STORAGE_KEY, null);
+      const projectInfo: Partial<ReportData> = savedData ? {
+        title: savedData.title || "LGE SAC Commissioning Report",
+        projectName: savedData.projectName || "",
+        opportunityNumber: savedData.opportunityNumber || "",
+        address: savedData.address || "",
+        products: savedData.products || defaultData.products,
+        inspectionDate: savedData.inspectionDate ? new Date(savedData.inspectionDate) : new Date(),
+        commissionerSignature: savedData.commissionerSignature || "",
+        installerSignature: savedData.installerSignature || "",
+        customerSignature: savedData.customerSignature || "",
+        productTypes: savedData.productTypes || ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
+      } : {};
 
       // Merge template with local inspection data
       const serverCategories = template.categories.length > 0 ? template.categories : defaultData.categories;
@@ -127,28 +117,52 @@ const Index = () => {
         categories: mergedCategories,
         productTypes: template.productTypes.length > 0 ? template.productTypes : defaultData.productTypes,
       });
+      
+      // Mark as initialized after data is loaded
+      isInitializedRef.current = true;
     };
 
     initializeData();
   }, []);
 
-  // Save all data to localStorage for backward compatibility
+  // Debounced save to localStorage for better performance
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    
-    // Save local inspection data separately
-    const localInspectionData: any = {};
-    data.categories.forEach(category => {
-      category.items.forEach(item => {
-        localInspectionData[item.id] = {
-          ok: item.ok,
-          ng: item.ng,
-          issue: item.issue,
-          images: item.images,
-        };
+    // Skip saving during initial load
+    if (!isInitializedRef.current) {
+      return;
+    }
+
+    // Clear previous timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce the save operation
+    saveTimeoutRef.current = setTimeout(() => {
+      // Save main data
+      safeLocalStorageSave(STORAGE_KEY, data);
+      
+      // Save local inspection data separately
+      const localInspectionData: Record<string, { ok: boolean; ng: boolean; issue: string; images: string[] }> = {};
+      data.categories.forEach(category => {
+        category.items.forEach(item => {
+          localInspectionData[item.id] = {
+            ok: item.ok,
+            ng: item.ng,
+            issue: item.issue,
+            images: item.images,
+          };
+        });
       });
-    });
-    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(localInspectionData));
+      safeLocalStorageSave(LOCAL_DATA_KEY, localInspectionData);
+    }, SAVE_DEBOUNCE_MS);
+
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [data]);
 
   const handleEditModeToggle = () => {
