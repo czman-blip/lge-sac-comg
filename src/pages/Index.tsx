@@ -54,7 +54,6 @@ const defaultData: ReportData = {
   inspectionDate: new Date(),
   commissionerSignature: "",
   installerSignature: "",
-  customerSignature: "",
   productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
 };
 
@@ -91,7 +90,6 @@ const Index = () => {
         inspectionDate: savedData.inspectionDate ? new Date(savedData.inspectionDate) : new Date(),
         commissionerSignature: savedData.commissionerSignature || "",
         installerSignature: savedData.installerSignature || "",
-        customerSignature: savedData.customerSignature || "",
         productTypes: savedData.productTypes || ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
       } : {};
 
@@ -767,15 +765,6 @@ const Index = () => {
               <SignatureCanvas
                 signature={data.installerSignature}
                 onSave={(signature) => setData({ ...data, installerSignature: signature })}
-                disabled={!editMode}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Customer Signature:</label>
-              <SignatureCanvas
-                signature={data.customerSignature}
-                onSave={(signature) => setData({ ...data, customerSignature: signature })}
                 disabled={!editMode}
               />
             </div>
