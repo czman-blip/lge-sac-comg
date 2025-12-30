@@ -2,7 +2,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/types/report";
 import { toast } from "sonner";
-import { defaultTemplateCategories, defaultProductTypes } from "@/data/defaultTemplateData";
+
+const DEFAULT_PRODUCT_TYPES = ["Multi V", "AHU", "ISC", "Water", "H/Kit", "DOAS"];
 
 interface TemplateData {
   categories: Category[];
@@ -11,88 +12,6 @@ interface TemplateData {
 
 export const useTemplate = () => {
   const [isLoading, setIsLoading] = useState(false);
-
-  // Seed the database with default template data if empty
-  const seedDefaultTemplate = async (): Promise<TemplateData> => {
-    try {
-      console.log("Seeding database with default template data...");
-      
-      // Insert categories
-      const categoryInserts = defaultTemplateCategories.map((cat) => ({
-        id: crypto.randomUUID(),
-        name: cat.name,
-        sort_order: cat.sortOrder,
-      }));
-
-      const { data: insertedCategories, error: catError } = await supabase
-        .from("template_categories")
-        .insert(categoryInserts)
-        .select();
-
-      if (catError) throw catError;
-
-      // Create mapping from sort_order to inserted category id
-      const categoryIdMap = new Map<number, string>();
-      insertedCategories?.forEach((cat) => {
-        categoryIdMap.set(cat.sort_order ?? 0, cat.id);
-      });
-
-      // Insert items
-      const itemInserts = defaultTemplateCategories.flatMap((cat) =>
-        cat.items.map((item) => ({
-          id: crypto.randomUUID(),
-          category_id: categoryIdMap.get(cat.sortOrder) || "",
-          text: item.text,
-          product_type: item.productType,
-          reference_images: item.referenceImages,
-          sort_order: item.sortOrder,
-        }))
-      );
-
-      if (itemInserts.length > 0) {
-        const { error: itemsError } = await supabase
-          .from("template_items")
-          .insert(itemInserts);
-
-        if (itemsError) throw itemsError;
-      }
-
-      // Insert product types
-      const { error: settingsError } = await supabase
-        .from("template_settings")
-        .upsert(
-          { key: "product_types", value: defaultProductTypes },
-          { onConflict: "key" }
-        );
-
-      if (settingsError) throw settingsError;
-
-      console.log("Default template seeded successfully");
-      toast.success("Checklist template initialized");
-
-      // Return the seeded data as Category format
-      const seededCategories: Category[] = defaultTemplateCategories.map((cat, catIndex) => ({
-        id: insertedCategories?.[catIndex]?.id || crypto.randomUUID(),
-        name: cat.name,
-        items: cat.items.map((item) => ({
-          id: crypto.randomUUID(),
-          text: item.text,
-          productType: item.productType,
-          referenceImages: item.referenceImages,
-          ok: false,
-          ng: false,
-          issue: "",
-          images: [],
-        })),
-      }));
-
-      return { categories: seededCategories, productTypes: defaultProductTypes };
-    } catch (error) {
-      console.error("Failed to seed default template:", error);
-      toast.error("Failed to initialize template");
-      return { categories: [], productTypes: defaultProductTypes };
-    }
-  };
 
   const loadTemplate = async (): Promise<TemplateData> => {
     setIsLoading(true);
@@ -124,12 +43,11 @@ export const useTemplate = () => {
         console.error("Failed to load product types:", settingsError);
       }
 
-      const productTypes = settings?.value as string[] || defaultProductTypes;
+      const productTypes = settings?.value as string[] || DEFAULT_PRODUCT_TYPES;
 
-      // If database is empty, seed with default data
+      // Return empty categories if database is empty (no default seeding)
       if (!categories || categories.length === 0) {
-        console.log("No template data found, seeding with defaults...");
-        return await seedDefaultTemplate();
+        return { categories: [], productTypes };
       }
 
       const template: Category[] = categories.map((cat) => ({
@@ -153,7 +71,7 @@ export const useTemplate = () => {
     } catch (error) {
       console.error("Failed to load template:", error);
       toast.error("Failed to load template from server");
-      return { categories: [], productTypes: defaultProductTypes };
+      return { categories: [], productTypes: DEFAULT_PRODUCT_TYPES };
     } finally {
       setIsLoading(false);
     }
