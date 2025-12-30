@@ -57,7 +57,8 @@ const defaultData: ReportData = {
 
 const Index = () => {
   const [editMode, setEditMode] = useState(false);
-  const [data, setData] = useState<ReportData>(defaultData);
+  const [data, setData] = useState<ReportData | null>(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
@@ -116,6 +117,7 @@ const Index = () => {
       
       // Mark as initialized after data is loaded
       isInitializedRef.current = true;
+      setIsDataLoaded(true);
     };
 
     initializeData();
@@ -123,8 +125,8 @@ const Index = () => {
 
   // Debounced save to localStorage for better performance
   useEffect(() => {
-    // Skip saving during initial load
-    if (!isInitializedRef.current) {
+    // Skip saving during initial load or if data is not loaded
+    if (!isInitializedRef.current || !data) {
       return;
     }
 
@@ -162,6 +164,7 @@ const Index = () => {
   }, [data]);
 
   const handleEditModeToggle = () => {
+    if (!data) return;
     if (!editMode) {
       // Entering edit mode - always ask for password
       setShowPasswordDialog(true);
@@ -173,6 +176,7 @@ const Index = () => {
   };
 
   const addCategory = () => {
+    if (!data) return;
     const newCategory: Category = {
       id: `cat-${Date.now()}`,
       name: "New Category",
@@ -182,17 +186,20 @@ const Index = () => {
   };
 
   const updateCategory = (index: number, category: Category) => {
+    if (!data) return;
     const newCategories = [...data.categories];
     newCategories[index] = category;
     setData({ ...data, categories: newCategories });
   };
 
   const deleteCategory = (index: number) => {
+    if (!data) return;
     const newCategories = data.categories.filter((_, i) => i !== index);
     setData({ ...data, categories: newCategories });
   };
 
   const addProductType = () => {
+    if (!data) return;
     if (newProductType && !data.productTypes.includes(newProductType)) {
       setData({ ...data, productTypes: [...data.productTypes, newProductType] });
       setNewProductType("");
@@ -201,6 +208,7 @@ const Index = () => {
   };
 
   const deleteProductType = (type: string) => {
+    if (!data) return;
     if (data.productTypes.length > 1) {
       setData({ ...data, productTypes: data.productTypes.filter(t => t !== type) });
       if (selectedProductType === type) {
@@ -213,6 +221,7 @@ const Index = () => {
   };
 
   const getFilteredCategories = () => {
+    if (!data) return [];
     if (selectedProductType === "Common") {
       return data.categories;
     }
@@ -265,6 +274,18 @@ const Index = () => {
       }
     );
   };
+
+  // Show loading state until data is loaded from server
+  if (!isDataLoaded || !data) {
+    return (
+      <div className="min-h-screen bg-secondary py-8 px-4 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading checklist...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary py-8 px-4">
