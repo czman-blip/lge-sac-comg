@@ -16,19 +16,21 @@ interface ChangePasswordDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const ADMIN_PASSWORD = "admin123";
+const DEFAULT_PASSWORD = "admin123";
 const PASSWORD_KEY = "edit_mode_password";
 
 export const ChangePasswordDialog = ({ open, onOpenChange }: ChangePasswordDialogProps) => {
-  const [adminPassword, setAdminPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (adminPassword !== ADMIN_PASSWORD) {
-      toast.error("Incorrect admin password");
+    const storedPassword = sessionStorage.getItem(PASSWORD_KEY) || DEFAULT_PASSWORD;
+    
+    if (currentPassword !== storedPassword) {
+      toast.error("Incorrect current password");
       return;
     }
 
@@ -45,7 +47,7 @@ export const ChangePasswordDialog = ({ open, onOpenChange }: ChangePasswordDialo
     sessionStorage.setItem(PASSWORD_KEY, newPassword);
     toast.success("Password changed successfully");
     onOpenChange(false);
-    setAdminPassword("");
+    setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
   };
@@ -56,17 +58,17 @@ export const ChangePasswordDialog = ({ open, onOpenChange }: ChangePasswordDialo
         <DialogHeader>
           <DialogTitle>Change Edit Mode Password</DialogTitle>
           <DialogDescription>
-            Enter admin password to change the edit mode password
+            Enter current password to change the edit mode password
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Admin Password</Label>
+            <Label>Current Password</Label>
             <Input
               type="password"
-              placeholder="Admin password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="Current password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               autoFocus
             />
           </div>
@@ -94,7 +96,7 @@ export const ChangePasswordDialog = ({ open, onOpenChange }: ChangePasswordDialo
               variant="outline"
               onClick={() => {
                 onOpenChange(false);
-                setAdminPassword("");
+                setCurrentPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
               }}
