@@ -15,6 +15,13 @@ export const SignatureCanvas = ({ signature, onSave, disabled }: SignatureCanvas
   const lastSavedSignature = useRef<string>("");
 
   useEffect(() => {
+    // Handle clearing: if signature becomes empty, clear the canvas
+    if (!signature && sigCanvas.current && lastSavedSignature.current !== "") {
+      sigCanvas.current.clear();
+      lastSavedSignature.current = "";
+      return;
+    }
+    
     // Only load signature if it's different from what we last saved
     // This prevents re-drawing the same signature on top of itself
     if (signature && sigCanvas.current && signature !== lastSavedSignature.current) {
