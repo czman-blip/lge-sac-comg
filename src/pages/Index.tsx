@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
-import { Plus, CalendarIcon, KeyRound, MapPin, X, Printer } from "lucide-react";
+import { Plus, CalendarIcon, KeyRound, MapPin, X, Printer, RotateCcw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -308,6 +308,40 @@ const Index = () => {
                   </h1>
                 )}
                 <div className="flex gap-2 w-full sm:w-auto">
+                  {!editMode && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to clear all input data? This will reset project info, issues, and uploaded images.")) {
+                          setData(prev => prev ? {
+                            ...prev,
+                            projectName: "",
+                            opportunityNumber: "",
+                            address: "",
+                            products: prev.products.map(p => ({ ...p, modelName: "", quantity: "" })),
+                            categories: prev.categories.map(cat => ({
+                              ...cat,
+                              items: cat.items.map(item => ({
+                                ...item,
+                                ok: false,
+                                ng: false,
+                                issue: "",
+                                images: [],
+                              })),
+                            })),
+                            commissionerSignature: "",
+                            installerSignature: "",
+                          } : prev);
+                          toast.success("All input data has been cleared");
+                        }
+                      }}
+                      className="gap-1.5"
+                      data-pdf-hide
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Clear
+                    </Button>
+                  )}
                   <Button
                     variant={editMode ? "default" : "outline"}
                     onClick={handleEditModeToggle}
