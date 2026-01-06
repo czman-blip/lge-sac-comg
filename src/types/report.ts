@@ -31,5 +31,6 @@ export interface ReportData {
   inspectionDate: Date;
   commissionerSignature: string;
   installerSignature: string;
+  customerSignature: string;
   productTypes: string[];
 }

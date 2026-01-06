@@ -52,6 +52,7 @@ const defaultData: ReportData = {
   inspectionDate: new Date(),
   commissionerSignature: "",
   installerSignature: "",
+  customerSignature: "",
   productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
 };
 
@@ -331,6 +332,7 @@ const Index = () => {
                             })),
                             commissionerSignature: "",
                             installerSignature: "",
+                            customerSignature: "",
                           } : prev);
                           toast.success("All input data has been cleared");
                         }
