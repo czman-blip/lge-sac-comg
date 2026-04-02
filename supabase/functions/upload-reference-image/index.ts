@@ -48,7 +48,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const filePath = `${Date.now()}-${fileName}`;
+    // Sanitize filename: remove non-ASCII chars, keep extension
+    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+    const safeName = fileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50) || 'image';
+    const filePath = `${Date.now()}-${safeName}.${ext}`;
     const arrayBuffer = await file.arrayBuffer();
 
     const { error: uploadError } = await supabase.storage
