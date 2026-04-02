@@ -115,6 +115,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
                     images={item.referenceImages || []}
                     onImagesChange={(images) => onUpdate({ ...item, referenceImages: images })}
                     disabled={false}
+                    maxImages={10}
                   />
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
