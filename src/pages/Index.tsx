@@ -65,7 +65,7 @@ const Index = () => {
   const [selectedProductType, setSelectedProductType] = useState<string>("Common");
   const [newProductType, setNewProductType] = useState("");
   const { loadTemplate, saveTemplate, isLoading } = useTemplate();
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitializedRef = useRef(false);
 
   // Load template from server and merge with local data
