@@ -20,6 +20,8 @@ const STORAGE_KEY = "lge-sac-commissioning-report";
 const LOCAL_DATA_KEY = "lge-sac-local-data";
 const SAVE_DEBOUNCE_MS = 500;
 
+const STORAGE_BASE = "https://axmesgvtkusntzkpxojy.supabase.co/storage/v1/object/public/reference-images/";
+
 const defaultData: ReportData = {
   title: "LGE SAC Commissioning Report",
   projectName: "",
@@ -31,21 +33,87 @@ const defaultData: ReportData = {
   ],
   categories: [
     {
-      id: "cat-1",
-      name: "Installation",
+      id: "cat-material",
+      name: "Material",
       items: [
-        { id: "item-1", text: "Is SVC area secured?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
-        { id: "item-2", text: "Are all connections tight?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
-        { id: "item-3", text: "Is drainage properly installed?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-mat-1", text: "1. Diameter and Thickness of refrigerant pipe should be as recommended by LG", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775095894166-____2.jpg`] },
+        { id: "item-mat-2", text: "Copper pipe should be covered with a cap for preventing inflow of external materials.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775095917670-____3.jpg`, `${STORAGE_BASE}1775095919174-____4.jpg`] },
+        { id: "item-mat-3", text: "Y-branch in the field should be supplied by LG.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096080433-____5.jpg`, `${STORAGE_BASE}1775096081629-____6.jpg`, `${STORAGE_BASE}1775096083334-____7.jpg`] },
       ],
     },
     {
-      id: "cat-2",
-      name: "Start-up",
+      id: "cat-refpipe",
+      name: "Refrigerant Pipe",
       items: [
-        { id: "item-4", text: "System pressure check completed?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
-        { id: "item-5", text: "Refrigerant charge verified?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
-        { id: "item-6", text: "Test run successful?", ok: false, ng: false, issue: "", images: [], productType: "Common" },
+        { id: "item-rp-1", text: "Pipe connection and branch installation must be done according to the LG installation standards.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096192227-____8.jpg`, `${STORAGE_BASE}1775096193445-____9.jpg`, `${STORAGE_BASE}1775096194528-____10.jpg`, `${STORAGE_BASE}1775096196217-____11.jpg`] },
+        { id: "item-rp-2", text: "Pipe welding should be performed while blowing nitrogen through the pipe.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096217700-____12.jpg`] },
+        { id: "item-rp-3", text: "Sleeve should be installed with proper space for the refrigerant pipe, drain pipe and cable.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096245678-____13.jpg`, `${STORAGE_BASE}1775096247403-____14.jpg`, `${STORAGE_BASE}1775096248794-____15.jpg`, `${STORAGE_BASE}1775096250318-____16.jpg`, `${STORAGE_BASE}1775096251656-____17.jpg`, `${STORAGE_BASE}1775096253064-____18.jpg`] },
+        { id: "item-rp-4", text: "Distance between hangers of the refrigerant pipe should be in the range of 1.2 ~ 1.5m(horizontal), 2.5 ~ 3.0m(vertical).", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096281963-____19.jpg`, `${STORAGE_BASE}1775096283489-____20.jpg`, `${STORAGE_BASE}1775096285325-____21.jpg`, `${STORAGE_BASE}1775096287274-____22.jpg`, `${STORAGE_BASE}1775096288655-____23.jpg`] },
+        { id: "item-rp-5", text: "Perform a standard pressure test to confirm that there is no piping & product leakage.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096327122-____24.jpg`, `${STORAGE_BASE}1775096328680-____25.jpg`] },
+      ],
+    },
+    {
+      id: "cat-drainpipe",
+      name: "Drain Pipe",
+      items: [
+        { id: "item-dp-1", text: "Drain pipe size should be as recommended in the installation manual of LG.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096351355-____26.jpg`, `${STORAGE_BASE}1775096352960-____27.jpg`] },
+        { id: "item-dp-2", text: "Air vent should be installed to prevent reverse flow in the common drain pipe.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096382907-____28.jpg`] },
+        { id: "item-dp-3", text: "Drain pipe should not be connected to the waste pipe to prevent emission of odors.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096403182-____29.jpg`] },
+        { id: "item-dp-4", text: "Hanger should be installed within a distnace of 1.0~1.5m.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096421569-____30.jpg`] },
+        { id: "item-dp-5", text: "Down slope should be more than 1/50~1/100.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096441163-____31.jpg`] },
+      ],
+    },
+    {
+      id: "cat-cable",
+      name: "Communication and Power cable",
+      items: [
+        { id: "item-cb-1", text: "Communication cable should be two core shield wire and its size should be more than 1.0mm².", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096467280-____32.jpg`, `${STORAGE_BASE}1775096468466-____33.jpg`] },
+        { id: "item-cb-2", text: "Communication cable should be enclosed in a conduit pipe and kept appropriate spacing away from power cable as PDB.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096491888-____34.jpg`, `${STORAGE_BASE}1775096493140-____35.jpg`] },
+        { id: "item-cb-3", text: "Power of all IDUs should be supplied through one circuit breaker. Don't install individual switch or connect power to the IDU from a separate circuit breaker.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096511806-____36.jpg`] },
+        { id: "item-cb-4", text: "Use a ring terminal for connections to the power terminal block.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096528596-____37.jpg`] },
+        { id: "item-cb-5", text: "Supply power to the outdoor units at least 6 hours before commissioning.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096545497-____38.jpg`] },
+        { id: "item-cb-6", text: "The ELCB circuit breaker should be installed for each ODU, IDU", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [] },
+      ],
+    },
+    {
+      id: "cat-idu",
+      name: "Indoor Unit",
+      items: [
+        { id: "item-idu-1", text: "Remote controller should be placed where it would not be influenced by external temperature and  the IDU discharge airflow.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096586317-____39.jpg`] },
+        { id: "item-idu-2", text: "Connection of IDU and the drain pipe should be done by a flexible hose to prevent connection breakage or drain pipe crack due to its vibration.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096594213-____40.jpg`] },
+        { id: "item-idu-3", text: "Service hole size should be sufficeint for checking and servicing the indoor unit ", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096602269-____41.jpg`] },
+      ],
+    },
+    {
+      id: "cat-odu",
+      name: "Outdoor Unit",
+      items: [
+        { id: "item-odu-1", text: "Use at least 200mm high concrete or/and H-beam support as a base support of the ODU. And ODU should be fixed tightly with anchor bolt.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096628928-____42.jpg`, `${STORAGE_BASE}1775096630628-____43.jpg`, `${STORAGE_BASE}1775096632363-____44.jpg`] },
+        { id: "item-odu-2", text: "Anti-vibration pad should be placed between outdoor unit and foundation.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096665001-____45.jpg`] },
+        { id: "item-odu-3", text: "Secure enough space for air circulation and service.", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096691034-____46.jpg`, `${STORAGE_BASE}1775096692326-____47.jpg`, `${STORAGE_BASE}1775096694038-____48.jpg`, `${STORAGE_BASE}1775096695511-____49.jpg`] },
+        { id: "item-odu-4", text: "Has ODU been installed in a place (not less than 3 meters apart) that is not affected by equipment generating kitchen exhaust, septic tank exhaust, toilet exhaust and harmonic wave?", ok: false, ng: false, issue: "", images: [], productType: "Multi V", referenceImages: [`${STORAGE_BASE}1775096712004-____50.jpg`] },
+      ],
+    },
+    {
+      id: "cat-ahu",
+      name: "AHU",
+      items: [
+        { id: "item-ahu-1", text: "AHU Comm kit Installation (SVC Area, preventing water)", ok: false, ng: false, issue: "", images: [], productType: "AHU", referenceImages: [`${STORAGE_BASE}1775096807671-____5.jpg`] },
+        { id: "item-ahu-2", text: "EEV kit capacity should match with the ODU", ok: false, ng: false, issue: "", images: [], productType: "AHU", referenceImages: [`${STORAGE_BASE}1775096823731-____6.jpg`] },
+        { id: "item-ahu-3", text: "Additional Refrigerant : Additional refrigerant of DX coil and extended pipe should be charged", ok: false, ng: false, issue: "", images: [], productType: "AHU", referenceImages: [`${STORAGE_BASE}1775096841599-____7.jpg`] },
+      ],
+    },
+    {
+      id: "cat-isc",
+      name: "ISC",
+      items: [
+        { id: "item-isc-1", text: "The anti-vibration pad should be 2 layers of 10 mm or more.", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775100944262-____6.jpg`] },
+        { id: "item-isc-2", text: "HMI communication line spec should be 0.75㎟ 2-line Shield and the length should be within 500m.", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775100966453-____11.jpg`] },
+        { id: "item-isc-3", text: "Is there a solution for freeze and burst prevention? (antifreeze/ flow-switch/ circulation pump interlock).", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775101100441-____12.jpg`] },
+        { id: "item-isc-4", text: "Is the load water pump interlocked with the ODU or with the central control?", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775101113811-____13.jpg`] },
+        { id: "item-isc-5", text: "Check how to control ISC (HMI or Contact or Modbus or Schedule).", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775101130914-____14.jpg`] },
+        { id: "item-isc-6", text: "In case of group control with HMI, group control is possible up to 5 unit.", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775101143101-____15.jpg`] },
+        { id: "item-isc-7", text: "Temp. diff should be set according to water flow design", ok: false, ng: false, issue: "", images: [], productType: "ISC", referenceImages: [`${STORAGE_BASE}1775101228800-____16.jpg`] },
       ],
     },
   ],
@@ -53,7 +121,7 @@ const defaultData: ReportData = {
   commissionerSignature: "",
   installerSignature: "",
   customerSignature: "",
-  productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit"],
+  productTypes: ["Multi V", "AHU", "ISC", "Water", "H/Kit", "DOAS"],
 };
 
 const Index = () => {
