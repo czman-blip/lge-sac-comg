@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageUpload } from "./ImageUpload";
+import { ReferenceImageUpload } from "./ReferenceImageUpload";
 import { Trash2, Image as ImageIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -111,7 +112,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               </DialogHeader>
               <div className="space-y-4">
                 {editMode ? (
-                  <ImageUpload
+                  <ReferenceImageUpload
                     images={item.referenceImages || []}
                     onImagesChange={(images) => onUpdate({ ...item, referenceImages: images })}
                     disabled={false}
