@@ -74,7 +74,7 @@ export const useDebouncedSave = <T>(
   dependencies: unknown[],
   delay: number = SAVE_DEBOUNCE_MS
 ) => {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
