@@ -112,7 +112,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               </DialogHeader>
               <div className="space-y-4">
                 {editMode ? (
-                  <ImageUpload
+                  <ReferenceImageUpload
                     images={item.referenceImages || []}
                     onImagesChange={(images) => onUpdate({ ...item, referenceImages: images })}
                     disabled={false}
