@@ -138,8 +138,18 @@ const Index = () => {
 
     // Debounce the save operation
     saveTimeoutRef.current = setTimeout(() => {
-      // Save main data
-      safeLocalStorageSave(STORAGE_KEY, data);
+      // Save main data WITHOUT reference images (they're on the server)
+      const dataToSave = {
+        ...data,
+        categories: data.categories.map(cat => ({
+          ...cat,
+          items: cat.items.map(item => ({
+            ...item,
+            referenceImages: undefined,
+          })),
+        })),
+      };
+      safeLocalStorageSave(STORAGE_KEY, dataToSave);
       
       // Save local inspection data separately
       const localInspectionData: Record<string, { ok: boolean; ng: boolean; issue: string; images: string[] }> = {};
