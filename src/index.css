@@ -191,3 +191,47 @@ All colors MUST be HSL.
     margin-top: 1rem;
   }
 }
+
+/* Print optimizations - critical for Android PDF save */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide interactive elements */
+  [data-pdf-hide] {
+    display: none !important;
+  }
+
+  /* Constrain images to prevent Android print renderer crash */
+  img {
+    max-width: 100% !important;
+    max-height: 300px !important;
+    object-fit: contain !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent page breaks inside checklist items */
+  .border.border-border.rounded-lg {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Reduce image grid size for print */
+  .grid.grid-cols-2 img {
+    max-height: 200px !important;
+  }
+
+  /* Ensure signatures don't break across pages */
+  canvas {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
