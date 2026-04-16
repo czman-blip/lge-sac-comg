@@ -10,10 +10,10 @@ interface ImageUploadProps {
   maxImages?: number;
 }
 
-// Constants for image optimization
-const MAX_WIDTH = 1600;
-const MAX_HEIGHT = 1600;
-const JPEG_QUALITY = 0.9;
+// Constants for image optimization - sized for A4 print quality
+const MAX_WIDTH = 800;
+const MAX_HEIGHT = 800;
+const JPEG_QUALITY = 0.6;
 const MAX_IMAGES_DEFAULT = 50;
 const MAX_FILE_SIZE_MB = 15;
 
