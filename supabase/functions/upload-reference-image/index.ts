@@ -38,17 +38,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Authorize: must be editor/admin
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: canEdit, error: roleError } = await adminClient.rpc("can_edit", {
-      _user_id: userData.user.id,
-    });
-    if (roleError || !canEdit) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     if (req.method === "DELETE") {
       const { path } = await req.json();
