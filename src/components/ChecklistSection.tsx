@@ -1,5 +1,6 @@
 import { ChecklistItem } from "@/types/report";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageUpload } from "./ImageUpload";
@@ -162,11 +163,12 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
       {/* 4. Issue field */}
       <div className="flex items-center gap-2">
         <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
-        <Input
+        <Textarea
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="flex-1 h-12 pt-3 pb-3.5 leading-[1.35]"
+          rows={2}
+          className="flex-1 min-h-12 pt-3 pb-3.5 leading-[1.35] resize-y whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
         />
       </div>
     </div>
