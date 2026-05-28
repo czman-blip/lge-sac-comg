@@ -8,6 +8,7 @@ const DEFAULT_PRODUCT_TYPES = ["Multi V", "AHU", "ISC", "Water", "H/Kit", "DOAS"
 interface TemplateData {
   categories: Category[];
   productTypes: string[];
+  title?: string;
 }
 
 export const useTemplate = () => {
@@ -28,9 +29,8 @@ export const useTemplate = () => {
           .order("sort_order"),
         supabase
           .from("template_settings")
-          .select("value")
-          .eq("key", "product_types")
-          .maybeSingle(),
+          .select("key,value")
+          .in("key", ["product_types", "report_title"]),
       ]);
 
       if (categoriesResult.error) throw categoriesResult.error;
@@ -41,11 +41,15 @@ export const useTemplate = () => {
 
       const categories = categoriesResult.data;
       const items = itemsResult.data;
-      const productTypes = settingsResult.data?.value as string[] || DEFAULT_PRODUCT_TYPES;
+      const settingsRows = settingsResult.data || [];
+      const productTypesRow = settingsRows.find((r) => r.key === "product_types");
+      const titleRow = settingsRows.find((r) => r.key === "report_title");
+      const productTypes = (productTypesRow?.value as string[]) || DEFAULT_PRODUCT_TYPES;
+      const title = typeof titleRow?.value === "string" ? (titleRow.value as string) : undefined;
 
       // Return empty categories if database is empty
       if (!categories || categories.length === 0) {
-        return { categories: [], productTypes };
+        return { categories: [], productTypes, title };
       }
 
       // Pre-group items by category_id for O(1) lookup instead of O(n) filter
@@ -71,7 +75,7 @@ export const useTemplate = () => {
         })),
       }));
 
-      return { categories: template, productTypes };
+      return { categories: template, productTypes, title };
     } catch (error) {
       console.error("Failed to load template:", error);
       toast.error("Failed to load template from server");
@@ -81,7 +85,7 @@ export const useTemplate = () => {
     }
   };
 
-  const saveTemplate = async (categories: Category[], productTypes: string[]) => {
+  const saveTemplate = async (categories: Category[], productTypes: string[], title?: string) => {
     setIsLoading(true);
     try {
       // Delete existing template items first, then categories
@@ -164,6 +168,20 @@ export const useTemplate = () => {
       if (settingsError) {
         console.error("Failed to save product types:", settingsError);
         throw settingsError;
+      }
+
+      // Save report title if provided
+      if (typeof title === "string") {
+        const { error: titleError } = await supabase
+          .from("template_settings")
+          .upsert(
+            { key: "report_title", value: title },
+            { onConflict: "key" }
+          );
+        if (titleError) {
+          console.error("Failed to save report title:", titleError);
+          throw titleError;
+        }
       }
 
       toast.success("Template saved to server");
