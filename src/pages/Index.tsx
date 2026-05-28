@@ -150,7 +150,7 @@ const Index = () => {
       // Load project info from old storage for backward compatibility
       const savedData = safeLocalStorageLoad<Partial<ReportData> | null>(STORAGE_KEY, null);
       const projectInfo: Partial<ReportData> = savedData ? {
-        title: savedData.title || "LGE SAC Commissioning Report",
+        title: savedData.title || defaultData.title,
         projectName: savedData.projectName || "",
         opportunityNumber: savedData.opportunityNumber || "",
         address: savedData.address || "",
@@ -180,6 +180,8 @@ const Index = () => {
       setData({
         ...defaultData,
         ...projectInfo,
+        // Server-side title overrides local (template is shared)
+        title: template.title || projectInfo.title || defaultData.title,
         categories: mergedCategories,
         productTypes: template.productTypes.length > 0 ? template.productTypes : defaultData.productTypes,
       });
@@ -248,8 +250,8 @@ const Index = () => {
       // Entering edit mode - always ask for password
       setShowPasswordDialog(true);
     } else {
-      // Exiting edit mode - save template to server (categories and productTypes)
-      saveTemplate(data.categories, data.productTypes);
+      // Exiting edit mode - save template to server (categories, productTypes, title)
+      saveTemplate(data.categories, data.productTypes, data.title);
       setEditMode(false);
     }
   };
