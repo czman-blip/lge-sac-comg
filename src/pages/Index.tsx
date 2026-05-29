@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { AutoResizeTextarea } from "@/components/AutoResizeTextarea";
 import { CategorySection } from "@/components/CategorySection";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 import { Category, ReportData } from "@/types/report";
@@ -577,7 +577,7 @@ const Index = () => {
                     <tr key={index}>
                       <td className="border border-border p-3 font-medium text-sm align-middle print:break-words">{product.name}</td>
                       <td className="border border-border p-3 align-middle print:break-words">
-                        <Textarea
+                        <AutoResizeTextarea
                           value={product.modelName}
                           onChange={(e) => {
                             const newProducts = [...data.products];
@@ -585,12 +585,11 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter models (press Enter for new line)"
-                          rows={2}
-                          className="border-0 focus-visible:ring-0 text-sm min-h-[48px] py-2 leading-[1.35] resize-y whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
+                          className="border-0 focus-visible:ring-0 text-sm min-h-[48px] py-2 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
                         />
                       </td>
                       <td className="border border-border p-3 align-middle print:break-words">
-                        <Input
+                        <AutoResizeTextarea
                           value={product.quantity}
                           onChange={(e) => {
                             const newProducts = [...data.products];
@@ -598,7 +597,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm h-12 py-2 leading-[1.2]"
+                          className="border-0 focus-visible:ring-0 text-sm min-h-[48px] py-2 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
                         />
                       </td>
                     </tr>
