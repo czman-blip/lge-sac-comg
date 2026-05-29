@@ -167,7 +167,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="flex-1 min-h-12 pt-3 pb-3.5 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
+          className="flex-1 min-h-[24px] py-1 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
         />
       </div>
     </div>

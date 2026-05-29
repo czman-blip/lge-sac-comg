@@ -585,7 +585,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter models (press Enter for new line)"
-                          className="border-0 focus-visible:ring-0 text-sm min-h-[48px] py-2 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
+                          className="border-0 focus-visible:ring-0 text-sm min-h-[24px] py-1 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
                         />
                       </td>
                       <td className="border border-border p-3 align-middle print:break-words">
@@ -597,7 +597,7 @@ const Index = () => {
                             setData({ ...data, products: newProducts });
                           }}
                           placeholder="Enter quantity"
-                          className="border-0 focus-visible:ring-0 text-sm min-h-[48px] py-2 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
+                          className="border-0 focus-visible:ring-0 text-sm min-h-[24px] py-1 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
                         />
                       </td>
                     </tr>
