@@ -178,6 +178,9 @@ const Index = () => {
         }),
       }));
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       setData({
         ...defaultData,
         ...projectInfo,
@@ -185,6 +188,7 @@ const Index = () => {
         title: template.title || projectInfo.title || defaultData.title,
         categories: mergedCategories,
         productTypes: template.productTypes.length > 0 ? template.productTypes : defaultData.productTypes,
+        inspectionDate: projectInfo.inspectionDate || today,
       });
       
       // Mark as initialized after data is loaded
