@@ -224,6 +224,7 @@ export const ImageUpload = memo(({
             type="button"
             disabled={isProcessing || images.length >= maxImages}
             className="h-8 gap-1 text-xs sm:text-sm touch-manipulation active:scale-95 transition-transform"
+            data-pdf-hide
           >
             {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
