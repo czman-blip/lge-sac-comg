@@ -23,7 +23,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
   
   return (
     <div 
-      className="border border-border rounded-lg p-3 sm:p-4 bg-card space-y-3 transition-opacity"
+      className="border border-border rounded-lg p-2 sm:p-2.5 bg-card space-y-1.5 transition-opacity"
       draggable={editMode}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
@@ -34,15 +34,14 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
         e.currentTarget.style.opacity = '1';
       }}
     >
-      <div className="flex flex-col gap-3">
-        {/* Product Type Selection and Checklist Item in one row */}
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        {/* Product Type + Checklist text + actions on a single row */}
           <Select
             value={item.productType}
             onValueChange={(value) => onUpdate({ ...item, productType: value })}
             disabled={!editMode}
           >
-            <SelectTrigger className="h-8 text-xs w-[80px] sm:w-[120px] py-1" data-pdf-hide>
+            <SelectTrigger className="h-7 text-xs w-[80px] sm:w-[110px] py-0.5 shrink-0" data-pdf-hide>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -59,17 +58,16 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             <Input
               value={item.text}
               onChange={(e) => onUpdate({ ...item, text: e.target.value })}
-              className="font-medium h-12 pt-3 pb-3.5 leading-[1.35] flex-1"
+              className="font-medium h-8 py-1 leading-[1.3] flex-1 min-w-[200px]"
               placeholder="Checklist item"
             />
           ) : (
-            <p className="font-medium flex-1 py-2">{item.text}</p>
+            <p className="font-medium flex-1 min-w-[200px] py-0.5 leading-snug">{item.text}</p>
           )}
-        </div>
-        
-        {/* 3. OK, NG, Reference buttons */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <label className="flex items-center gap-1.5 cursor-pointer">
+
+        {/* OK, NG, Reference, Image actions inline */}
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+          <label className="flex items-center gap-1 cursor-pointer">
             <span className="text-sm font-medium leading-4">OK</span>
             <Checkbox
               checked={item.ok}
@@ -80,7 +78,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
             />
           </label>
           
-          <label className="flex items-center gap-1.5 cursor-pointer">
+          <label className="flex items-center gap-1 cursor-pointer">
             <span className="text-sm font-medium leading-4">NG</span>
             <Checkbox
               checked={item.ng}
@@ -96,7 +94,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1 text-xs sm:text-sm"
+                className="h-7 px-2 gap-1 text-xs"
                 data-pdf-hide
               >
                 <ImageIcon className="w-4 h-4" />
@@ -152,7 +150,7 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
               variant="ghost"
               size="icon"
               onClick={onDelete}
-              className="h-8 w-8 text-destructive"
+              className="h-7 w-7 text-destructive"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -162,12 +160,12 @@ export const ChecklistSection = ({ item, onUpdate, onDelete, editMode, productTy
 
       {/* 4. Issue field */}
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium whitespace-nowrap">Issue:</label>
+        <label className="text-xs font-medium whitespace-nowrap">Issue:</label>
         <AutoResizeTextarea
           value={item.issue}
           onChange={(e) => onUpdate({ ...item, issue: e.target.value })}
           placeholder="Describe any issues..."
-          className="flex-1 min-h-[24px] py-1 leading-[1.35] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
+          className="flex-1 min-h-[22px] py-0.5 px-2 text-sm leading-[1.3] whitespace-pre-wrap break-words print:whitespace-pre-wrap print:break-words print:overflow-visible print:h-auto"
         />
       </div>
     </div>
