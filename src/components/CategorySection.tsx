@@ -50,8 +50,8 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 border-b-2 border-primary pb-2">
+    <div className="space-y-2">
+      <div className="flex items-center gap-3 border-b-2 border-primary pb-1">
         {editMode ? (
           <Input
             value={category.name}
@@ -75,7 +75,7 @@ export const CategorySection = ({ category, onUpdate, onDelete, editMode, produc
         )}
       </div>
 
-      <div className="space-y-3 pl-4">
+      <div className="space-y-1.5 pl-2 sm:pl-3">
         {category.items.map((item, index) => (
           <div
             key={item.id}
