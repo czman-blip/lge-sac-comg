@@ -455,18 +455,18 @@ const Index = () => {
           {/* Main Report Content */}
           <div className="bg-card border-2 border-border rounded-lg shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Project Information */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold border-b-2 border-primary pb-2">
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">
               Project Information
             </h2>
-            <div className="grid gap-4">
+            <div className="grid gap-2">
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
                 <label className="text-sm font-semibold print:items-start">Project name:</label>
                 <Input
                   value={data.projectName}
                   onChange={(e) => setData({ ...data, projectName: e.target.value })}
                   placeholder="Enter project name"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                  className="h-9 text-sm print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-center">
@@ -475,17 +475,17 @@ const Index = () => {
                   value={data.opportunityNumber}
                   onChange={(e) => setData({ ...data, opportunityNumber: e.target.value })}
                   placeholder="Enter opportunity number"
-                  className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                  className="h-9 text-sm print:max-w-[450px] print:break-words"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 items-start">
-                <label className="text-sm font-semibold pt-2 print:pt-0">Address:</label>
-                <div className="space-y-2">
+                <label className="text-sm font-semibold print:items-start">Address:</label>
+                <div className="space-y-1">
                   <Input
                     value={data.address}
                     onChange={(e) => setData({ ...data, address: e.target.value })}
                     placeholder="Enter address or use location button"
-                    className="h-14 pt-3 pb-3.5 text-base leading-[1.35] print:max-w-[450px] print:break-words"
+                    className="h-9 text-sm print:max-w-[450px] print:break-words"
                   />
                   <Button
                     variant="outline"
@@ -493,6 +493,7 @@ const Index = () => {
                     onClick={getCurrentLocation}
                     className="gap-2"
                     type="button"
+                    data-pdf-hide
                   >
                     <MapPin className="w-4 h-4" />
                     Get Current Location
